@@ -366,6 +366,8 @@ if (
               <img
                 src={currentQuestion.image}
                 alt={tx("Savol rasmi")}
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxWidth: "100%",
                   maxHeight: "260px",

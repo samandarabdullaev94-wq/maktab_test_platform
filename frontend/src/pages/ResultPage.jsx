@@ -85,6 +85,8 @@ function ResultPage() {
               <img
                 src={certificate.qr_code_url}
                 alt={tx("Sertifikat QR kodi")}
+                loading="lazy"
+                decoding="async"
                 style={{
                   width: "150px",
                   height: "150px",

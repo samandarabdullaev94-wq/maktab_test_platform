@@ -346,7 +346,10 @@ const handleStartSelected = async () => {
             >
               <img
                 src={logoSrc}
-                alt={t("common.appName")}
+                alt="e-bilimtest.uz online test platformasi logosi"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 style={{
                   maxWidth: "100%",
                   height: "auto",
@@ -357,6 +360,19 @@ const handleStartSelected = async () => {
             </div>
           </div>
         </div>
+
+        <section className="home-seo-hero" aria-labelledby="home-seo-title">
+          <p className="home-seo-kicker">e bilimtest uz · e-bilimtest · ebilimtest</p>
+          <h1 id="home-seo-title">
+            e-bilimtest.uz — maktab o‘quvchilari uchun online test,
+            sertifikat va TOP reyting platformasi
+          </h1>
+          <p>
+            e-bilimtest.uz o‘quvchilarga bilim darajasini online test orqali
+            tekshirish, yuqori natija uchun sertifikat olish va respublika
+            bo‘yicha reytingdagi o‘rnini kuzatishga yordam beradi.
+          </p>
+        </section>
 
         <div
           style={{
@@ -540,6 +556,54 @@ const handleStartSelected = async () => {
             </button>
           </div>
         </div>
+
+        <section className="home-seo-content" aria-label="e-bilimtest.uz haqida">
+          <article>
+            <h2>Platforma haqida</h2>
+            <p>
+              e-bilimtest.uz — maktab o‘quvchilari uchun yaratilgan online
+              test platformasi. O‘quvchi hudud, maktab, sinf va fanlarni
+              tanlab test ishlaydi, natijasini ko‘radi va bilim darajasini
+              baholaydi.
+            </p>
+          </article>
+
+          <article>
+            <h2>Qanday ishlaydi</h2>
+            <h3>Ma’lumotlarni kiriting va fanlarni tanlang</h3>
+            <p>
+              O‘quvchi kerakli maydonlarni to‘ldiradi, fanlarni tanlaydi va
+              testni boshlaydi. Test yakunida ball, foiz va umumiy natija
+              ko‘rsatiladi.
+            </p>
+          </article>
+
+          <article>
+            <h2>Sertifikat tizimi</h2>
+            <h3>Yuqori natija sertifikat bilan tasdiqlanadi</h3>
+            <p>
+              Belgilangan o‘tish foizidan yuqori natija olgan o‘quvchi
+              sertifikatga ega bo‘ladi. Sertifikat keyinchalik maxsus kod va
+              QR havola orqali tekshirilishi mumkin.
+            </p>
+          </article>
+
+          <article>
+            <h2>Reyting tizimi</h2>
+            <h3>Respublika bo‘yicha TOP natijalar</h3>
+            <p>
+              e-bilimtest platformasida yuqori ball olgan o‘quvchilar
+              respublika bo‘yicha TOP reyting ro‘yxatida ko‘rinadi. Bu
+              o‘quvchilarga o‘z bilimini solishtirish va yanada yaxshi natija
+              qilishga motivatsiya beradi.
+            </p>
+          </article>
+        </section>
+
+        <footer className="home-seo-footer">
+          <strong>e-bilimtest.uz</strong>
+          <span>e bilimtest uz · e-bilimtest · ebilimtest</span>
+        </footer>
       </div>
 
       {siteSettings.ticker_enabled && siteSettings.ticker_text && (

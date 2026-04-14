@@ -7,8 +7,8 @@ import api from "../utils/api";
 import phoneIcon from "../assets/icons/phone.png";
 import uzFlag from "../assets/ui/flags/uz.png";
 import ruFlag from "../assets/ui/flags/ru.png";
-import telegramIcon from "../assets/ui/social/telegram.svg";
-import instagramIcon from "../assets/ui/social/instagram.svg";
+import telegramIcon from "../assets/ui/social/telegram.png";
+import instagramIcon from "../assets/ui/social/instagram.png";
 import sunIcon from "../assets/ui/theme/sun.svg";
 import moonIcon from "../assets/ui/theme/moon.svg";
 

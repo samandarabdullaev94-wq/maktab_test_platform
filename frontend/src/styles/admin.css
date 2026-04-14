@@ -637,7 +637,7 @@
 }
 
 .admin-tree-node-test > .admin-tree-row {
-  grid-template-columns: 34px minmax(220px, 1fr) auto auto;
+  grid-template-columns: 34px minmax(220px, 0.9fr) minmax(260px, 1fr) auto auto;
 }
 
 .admin-tree-toggle {
@@ -689,6 +689,29 @@
 
 .admin-tree-question-fields {
   grid-template-columns: minmax(190px, 0.9fr) 90px minmax(220px, 1.3fr) minmax(160px, 0.8fr);
+}
+
+.admin-tree-test-fields {
+  grid-template-columns: minmax(130px, 0.7fr) minmax(180px, 1fr);
+}
+
+.admin-tree-class-info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-tree-class-info span {
+  color: var(--app-muted-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-tree-class-info strong {
+  color: var(--app-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .admin-tree-add-form {
@@ -765,6 +788,7 @@
   .admin-tree-node-test > .admin-tree-row,
   .admin-tree-fields-compact,
   .admin-tree-fields-wide,
+  .admin-tree-test-fields,
   .admin-tree-question-fields,
   .admin-tree-add-form,
   .admin-tree-add-form-question {

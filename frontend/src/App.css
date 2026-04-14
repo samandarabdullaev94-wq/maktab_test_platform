@@ -68,6 +68,90 @@
   align-items: start;
 }
 
+.home-seo-hero,
+.home-seo-content {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+}
+
+.home-seo-hero {
+  text-align: center;
+  color: var(--app-text);
+}
+
+.home-seo-hero h1 {
+  max-width: 920px;
+  margin: 0 auto 12px;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.home-seo-hero p {
+  max-width: 860px;
+  margin: 0 auto;
+  color: var(--app-muted-text);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.home-seo-kicker {
+  margin-bottom: 8px !important;
+  color: var(--app-primary-strong) !important;
+  font-size: 14px !important;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.home-seo-content {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-seo-content article {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-lg);
+  padding: 18px;
+  box-shadow: var(--app-card-shadow);
+}
+
+.home-seo-content h2 {
+  margin: 0 0 10px;
+  color: var(--app-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.home-seo-content h3 {
+  margin: 0 0 8px;
+  color: var(--app-primary-strong);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.home-seo-content p {
+  margin: 0;
+  color: var(--app-muted-text);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.home-seo-footer {
+  max-width: 1180px;
+  margin: 0 auto 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--app-muted-text);
+  font-size: 14px;
+}
+
+.home-seo-footer strong {
+  color: var(--app-text);
+}
+
 .ticker-outer {
   margin-top: auto;
   padding-top: clamp(18px, 4svh, 42px);
@@ -122,6 +206,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
+  .home-seo-content {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .test-session-grid {
     grid-template-columns: 1fr !important;
   }
@@ -166,6 +254,19 @@
   .home-form-grid {
     grid-template-columns: 1fr !important;
     gap: 14px !important;
+  }
+
+  .home-seo-hero,
+  .home-seo-content {
+    margin-bottom: 18px;
+  }
+
+  .home-seo-hero h1 {
+    font-size: 22px;
+  }
+
+  .home-seo-content {
+    grid-template-columns: 1fr;
   }
 
   .ticker-outer {

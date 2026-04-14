@@ -152,6 +152,12 @@ function TestContentManager({ classes = [], classLoading = false }) {
     );
   };
 
+  const handleTestFieldChange = (id, field, value) => {
+    setTests((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+  };
+
   const handleQuestionFieldChange = (id, field, value) => {
     setQuestions((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
@@ -334,6 +340,23 @@ function TestContentManager({ classes = [], classLoading = false }) {
     } catch (error) {
       console.error(error);
       alert(tx("Fanni saqlashda xatolik"));
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleSaveTest = async (item) => {
+    try {
+      setSavingId(`test-${item.id}`);
+      const res = await api.patch(`admin/tests/${item.id}/`, {
+        school_class: Number(item.school_class),
+      });
+      setTests((prev) =>
+        prev.map((test) => (test.id === item.id ? res.data : test))
+      );
+    } catch (error) {
+      console.error(error);
+      alert(tx("Testni saqlashda xatolik yuz berdi"));
     } finally {
       setSavingId(null);
     }
@@ -586,15 +609,45 @@ function TestContentManager({ classes = [], classLoading = false }) {
                               {subjectTests.length === 0 ? <div className="admin-tree-empty">{tx("Testlar topilmadi")}</div> : subjectTests.map((test) => {
                                 const testQuestions = questionsByTest[test.id] || [];
                                 const testOpen = isExpanded("tests", test.id);
+                                const selectedClass = classOptions.find(
+                                  (item) =>
+                                    Number(item.id) === Number(test.school_class)
+                                );
 
                                 return (
                                   <section className="admin-tree-node admin-tree-node-test" key={test.id}>
                                     <div className="admin-tree-row" role="button" tabIndex={0} onClick={() => toggleNode("tests", test.id)} onKeyDown={(event) => handleTreeKeyDown(event, "tests", test.id)}>
                                       <span className="admin-tree-toggle">{testOpen ? "-" : "+"}</span>
-                                      <div className="admin-tree-summary"><strong>{test.title || tx("Test")}</strong><span>{test.class_name || tx("Sinf")} - {testQuestions.length} {tx("savol")}</span></div>
+                                      <div className="admin-tree-summary"><strong>{test.title || tx("Test")}</strong><span>{selectedClass?.label || test.class_name || tx("Sinf biriktirilmagan")} - {testQuestions.length} {tx("savol")}</span></div>
+                                      <div className="admin-tree-fields admin-tree-test-fields" onClick={(event) => event.stopPropagation()}>
+                                        <div className="admin-tree-class-info">
+                                          <span>{tx("Sinf")}</span>
+                                          <strong>{selectedClass?.label || test.class_name || tx("Sinf biriktirilmagan")}</strong>
+                                        </div>
+                                        <CustomSelect
+                                          value={test.school_class || ""}
+                                          onChange={(value) =>
+                                            handleTestFieldChange(
+                                              test.id,
+                                              "school_class",
+                                              value
+                                            )
+                                          }
+                                          options={classOptions}
+                                          placeholder={
+                                            classLoading
+                                              ? tx("Sinflar yuklanmoqda...")
+                                              : tx("Sinf tanlang")
+                                          }
+                                          disabled={classLoading}
+                                          getOptionLabel={(item) => item.label}
+                                          getOptionValue={(item) => item.id}
+                                        />
+                                      </div>
                                       <div className="admin-tree-meta">{test.is_active ? tx("Faol") : tx("Nofaol")}</div>
                                       <div className="admin-table-actions" onClick={(event) => event.stopPropagation()}>
                                         <button type="button" className="admin-primary-btn" onClick={() => { setNodeExpanded("tests", test.id); toggleAddForm("question", test.id); }}>+ {tx("Savol")}</button>
+                                        <button type="button" className="admin-primary-btn" disabled={savingId === `test-${test.id}`} onClick={() => handleSaveTest(test)}>{savingId === `test-${test.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
                                         <button type="button" className="admin-danger-btn" onClick={() => handleDeleteTest(test)}>{tx("O'chirish")}</button>
                                       </div>
                                     </div>
