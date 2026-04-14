@@ -610,6 +610,127 @@
   font-size: 14px;
 }
 
+.admin-content-tree {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-tree-node {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface);
+}
+
+.admin-tree-node-subject,
+.admin-tree-node-test,
+.admin-tree-node-question {
+  background: var(--app-surface-muted);
+}
+
+.admin-tree-row {
+  display: grid;
+  grid-template-columns: 34px minmax(170px, 0.7fr) minmax(300px, 1.5fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.admin-tree-node-test > .admin-tree-row {
+  grid-template-columns: 34px minmax(220px, 1fr) auto auto;
+}
+
+.admin-tree-toggle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--app-control-bg);
+  border: 1px solid var(--app-control-border);
+  color: var(--app-primary-strong);
+  font-weight: 800;
+}
+
+.admin-tree-summary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-tree-summary strong {
+  color: var(--app-text);
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.admin-tree-summary span,
+.admin-tree-meta,
+.admin-tree-empty {
+  color: var(--app-muted-text);
+  font-size: 14px;
+}
+
+.admin-tree-fields,
+.admin-tree-add-form {
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-tree-fields-compact {
+  grid-template-columns: repeat(2, minmax(140px, 1fr)) auto;
+}
+
+.admin-tree-fields-wide {
+  grid-template-columns: repeat(2, minmax(140px, 1fr)) minmax(190px, 1fr) auto;
+}
+
+.admin-tree-question-fields {
+  grid-template-columns: minmax(190px, 0.9fr) 90px minmax(220px, 1.3fr) minmax(160px, 0.8fr);
+}
+
+.admin-tree-add-form {
+  grid-template-columns: repeat(2, minmax(160px, 1fr)) auto auto;
+  margin: 0 14px 14px;
+  padding: 14px;
+  border: 1px dashed var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-control-bg);
+}
+
+.admin-tree-add-root {
+  margin: 0 0 18px;
+}
+
+.admin-tree-add-form-question {
+  grid-template-columns: 90px minmax(240px, 1fr) minmax(180px, 0.7fr) auto;
+}
+
+.admin-tree-children {
+  display: grid;
+  gap: 12px;
+  margin: 0 14px 14px 24px;
+  padding-left: 18px;
+  border-left: 2px solid var(--app-border);
+}
+
+.admin-tree-answer-children {
+  margin-left: 12px;
+}
+
+.admin-tree-empty {
+  padding: 14px;
+  border: 1px dashed var(--app-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-control-bg);
+}
+
+.admin-tree-answer-row {
+  background: var(--app-surface);
+}
+
 @media (max-width: 1100px) {
   .admin-layout {
     grid-template-columns: 1fr;
@@ -639,7 +760,19 @@
   }
 
   .admin-question-edit-grid,
-  .admin-answer-row {
+  .admin-answer-row,
+  .admin-tree-row,
+  .admin-tree-node-test > .admin-tree-row,
+  .admin-tree-fields-compact,
+  .admin-tree-fields-wide,
+  .admin-tree-question-fields,
+  .admin-tree-add-form,
+  .admin-tree-add-form-question {
     grid-template-columns: 1fr;
+  }
+
+  .admin-tree-children {
+    margin-left: 8px;
+    padding-left: 12px;
   }
 }
