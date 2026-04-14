@@ -109,14 +109,14 @@ function TestContentManager({ classes = [], classLoading = false }) {
   const getDeleteErrorMessage = (error) =>
     error.response?.data?.error || tx("O'chirishda xatolik yuz berdi");
 
-  const handleDelete = async (endpoint, confirmMessage) => {
+  const handleDelete = async (endpoint, confirmMessage, onSuccess) => {
     if (!window.confirm(tx(confirmMessage))) {
       return;
     }
 
     try {
       await api.delete(endpoint);
-      await fetchAll();
+      onSuccess();
     } catch (error) {
       console.error("O'chirishda xatolik:", error);
       alert(getDeleteErrorMessage(error));
@@ -125,15 +125,15 @@ function TestContentManager({ classes = [], classLoading = false }) {
 
   const handleCreateDirection = async () => {
     try {
-      await api.post("admin/directions/", {
+      const res = await api.post("admin/directions/", {
         ...newDirection,
       });
+      setDirections((prev) => [...prev, res.data]);
       setNewDirection({
         name_uz: "",
         name_ru: "",
         is_active: true,
       });
-      fetchAll();
     } catch (error) {
       console.error(error);
       alert(tx("Yo'nalish qo'shishda xatolik"));
@@ -142,17 +142,17 @@ function TestContentManager({ classes = [], classLoading = false }) {
 
   const handleCreateSubject = async () => {
     try {
-      await api.post("admin/subjects/", {
+      const res = await api.post("admin/subjects/", {
         ...newSubject,
         direction: Number(newSubject.direction),
       });
+      setSubjects((prev) => [...prev, res.data]);
       setNewSubject({
         direction: "",
         name_uz: "",
         name_ru: "",
         is_active: true,
       });
-      fetchAll();
     } catch (error) {
       console.error(error);
       alert(tx("Fan qo'shishda xatolik"));
@@ -161,12 +161,13 @@ function TestContentManager({ classes = [], classLoading = false }) {
 
   const handleCreateTest = async () => {
     try {
-      await api.post("admin/tests/", {
+      const res = await api.post("admin/tests/", {
         ...newTest,
         school_class: Number(newTest.school_class),
         subject: Number(newTest.subject),
         duration_minutes: Number(newTest.duration_minutes),
       });
+      setTests((prev) => [res.data, ...prev]);
       setNewTest({
         school_class: "",
         subject: "",
@@ -174,7 +175,6 @@ function TestContentManager({ classes = [], classLoading = false }) {
         duration_minutes: 20,
         is_active: true,
       });
-      fetchAll();
     } catch (error) {
       console.error(error);
       alert(tx("Test qo'shishda xatolik"));
@@ -192,14 +192,14 @@ function TestContentManager({ classes = [], classLoading = false }) {
         payload.append("image", newQuestion.image);
       }
 
-      await api.post("admin/questions/", payload);
+      const res = await api.post("admin/questions/", payload);
+      setQuestions((prev) => [res.data, ...prev]);
       setNewQuestion({
         test: "",
         text: "",
         order: 1,
         image: null,
       });
-      fetchAll();
     } catch (error) {
       console.error(error);
       alert(tx("Savol qo'shishda xatolik"));
@@ -208,16 +208,16 @@ function TestContentManager({ classes = [], classLoading = false }) {
 
   const handleCreateAnswer = async () => {
     try {
-      await api.post("admin/answers/", {
+      const res = await api.post("admin/answers/", {
         ...newAnswer,
         question: Number(newAnswer.question),
       });
+      setAnswers((prev) => [res.data, ...prev]);
       setNewAnswer({
         question: "",
         text: "",
         is_correct: false,
       });
-      fetchAll();
     } catch (error) {
       console.error(error);
       alert(tx("Javob qo'shishda xatolik"));
@@ -227,12 +227,16 @@ function TestContentManager({ classes = [], classLoading = false }) {
   const handleSaveDirection = async (item) => {
     try {
       setSavingId(`direction-${item.id}`);
-      await api.patch(`admin/directions/${item.id}/`, {
+      const res = await api.patch(`admin/directions/${item.id}/`, {
         name_uz: item.name_uz,
         name_ru: item.name_ru,
         is_active: item.is_active,
       });
-      fetchAll();
+      setDirections((prev) =>
+        prev.map((direction) =>
+          direction.id === item.id ? res.data : direction
+        )
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Yo'nalishni saqlashda xatolik"));
@@ -244,13 +248,15 @@ function TestContentManager({ classes = [], classLoading = false }) {
   const handleSaveSubject = async (item) => {
     try {
       setSavingId(`subject-${item.id}`);
-      await api.patch(`admin/subjects/${item.id}/`, {
+      const res = await api.patch(`admin/subjects/${item.id}/`, {
         direction: Number(item.direction),
         name_uz: item.name_uz,
         name_ru: item.name_ru,
         is_active: item.is_active,
       });
-      fetchAll();
+      setSubjects((prev) =>
+        prev.map((subject) => (subject.id === item.id ? res.data : subject))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Fanni saqlashda xatolik"));
@@ -263,22 +269,25 @@ function TestContentManager({ classes = [], classLoading = false }) {
     try {
       setSavingId(`question-${item.id}`);
 
+      let res;
       if (item.imageFile) {
         const payload = new FormData();
         payload.append("test", Number(item.test));
         payload.append("text", item.text);
         payload.append("order", Number(item.order));
         payload.append("image", item.imageFile);
-        await api.patch(`admin/questions/${item.id}/`, payload);
+        res = await api.patch(`admin/questions/${item.id}/`, payload);
       } else {
-        await api.patch(`admin/questions/${item.id}/`, {
+        res = await api.patch(`admin/questions/${item.id}/`, {
           test: Number(item.test),
           text: item.text,
           order: Number(item.order),
         });
       }
 
-      fetchAll();
+      setQuestions((prev) =>
+        prev.map((question) => (question.id === item.id ? res.data : question))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Savolni saqlashda xatolik"));
@@ -290,12 +299,14 @@ function TestContentManager({ classes = [], classLoading = false }) {
   const handleSaveAnswer = async (item) => {
     try {
       setSavingId(`answer-${item.id}`);
-      await api.patch(`admin/answers/${item.id}/`, {
+      const res = await api.patch(`admin/answers/${item.id}/`, {
         question: Number(item.question),
         text: item.text,
         is_correct: item.is_correct,
       });
-      fetchAll();
+      setAnswers((prev) =>
+        prev.map((answer) => (answer.id === item.id ? res.data : answer))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Javobni saqlashda xatolik"));
@@ -307,24 +318,51 @@ function TestContentManager({ classes = [], classLoading = false }) {
   const handleDeleteDirection = (item) => {
     handleDelete(
       `admin/directions/${item.id}/`,
-      "Yo'nalishni o'chirishni tasdiqlaysizmi?"
+      "Yo'nalishni o'chirishni tasdiqlaysizmi?",
+      () =>
+        setDirections((prev) =>
+          prev.filter((direction) => direction.id !== item.id)
+        )
     );
   };
 
   const handleDeleteSubject = (item) => {
-    handleDelete(`admin/subjects/${item.id}/`, "Fanni o'chirishni tasdiqlaysizmi?");
+    handleDelete(
+      `admin/subjects/${item.id}/`,
+      "Fanni o'chirishni tasdiqlaysizmi?",
+      () => setSubjects((prev) => prev.filter((subject) => subject.id !== item.id))
+    );
   };
 
   const handleDeleteTest = (item) => {
-    handleDelete(`admin/tests/${item.id}/`, "Testni o'chirishni tasdiqlaysizmi?");
+    handleDelete(
+      `admin/tests/${item.id}/`,
+      "Testni o'chirishni tasdiqlaysizmi?",
+      () => setTests((prev) => prev.filter((test) => test.id !== item.id))
+    );
   };
 
   const handleDeleteQuestion = (item) => {
-    handleDelete(`admin/questions/${item.id}/`, "Savolni o'chirishni tasdiqlaysizmi?");
+    handleDelete(
+      `admin/questions/${item.id}/`,
+      "Savolni o'chirishni tasdiqlaysizmi?",
+      () => {
+        setQuestions((prev) =>
+          prev.filter((question) => question.id !== item.id)
+        );
+        setAnswers((prev) =>
+          prev.filter((answer) => Number(answer.question) !== Number(item.id))
+        );
+      }
+    );
   };
 
   const handleDeleteAnswer = (item) => {
-    handleDelete(`admin/answers/${item.id}/`, "Javobni o'chirishni tasdiqlaysizmi?");
+    handleDelete(
+      `admin/answers/${item.id}/`,
+      "Javobni o'chirishni tasdiqlaysizmi?",
+      () => setAnswers((prev) => prev.filter((answer) => answer.id !== item.id))
+    );
   };
 
   const classOptions = useMemo(

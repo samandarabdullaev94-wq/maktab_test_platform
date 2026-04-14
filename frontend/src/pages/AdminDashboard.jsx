@@ -278,12 +278,14 @@ function AdminDashboard() {
     try {
       setSavingTestId(test.id);
 
-      await api.patch(`admin/tests/${test.id}/`, {
+      const res = await api.patch(`admin/tests/${test.id}/`, {
         duration_minutes: Number(test.duration_minutes),
         is_active: test.is_active,
       });
 
-      await fetchTests();
+      setTests((prev) =>
+        prev.map((item) => (item.id === test.id ? res.data : item))
+      );
     } catch (error) {
       console.error("Testni saqlashda xatolik:", error);
       alert(tx("Testni saqlashda xatolik yuz berdi"));
@@ -299,7 +301,7 @@ function AdminDashboard() {
 
     try {
       await api.delete(`admin/tests/${test.id}/`);
-      await fetchTests();
+      setTests((prev) => prev.filter((item) => item.id !== test.id));
     } catch (error) {
       console.error("Testni o'chirishda xatolik:", error);
       alert(
@@ -340,11 +342,11 @@ function AdminDashboard() {
 
   const handleCreateRegion = async () => {
     try {
-      await api.post("admin/regions/", {
+      const res = await api.post("admin/regions/", {
         ...newRegion,
       });
       setNewRegion({ name_uz: "", name_ru: "", is_active: true });
-      fetchOrganizations();
+      setRegions((prev) => [...prev, res.data]);
     } catch (error) {
       console.error(error);
       alert(tx("Viloyat qo'shishda xatolik"));
@@ -353,12 +355,12 @@ function AdminDashboard() {
 
   const handleCreateDistrict = async () => {
     try {
-      await api.post("admin/districts/", {
+      const res = await api.post("admin/districts/", {
         ...newDistrict,
         region: Number(newDistrict.region),
       });
       setNewDistrict({ region: "", name_uz: "", name_ru: "", is_active: true });
-      fetchOrganizations();
+      setDistricts((prev) => [...prev, res.data]);
     } catch (error) {
       console.error(error);
       alert(tx("Tuman/Shahar qo'shishda xatolik"));
@@ -367,12 +369,12 @@ function AdminDashboard() {
 
   const handleCreateSchool = async () => {
     try {
-      await api.post("admin/schools/", {
+      const res = await api.post("admin/schools/", {
         ...newSchool,
         district: Number(newSchool.district),
       });
       setNewSchool({ district: "", name_uz: "", name_ru: "", is_active: true });
-      fetchOrganizations();
+      setSchools((prev) => [...prev, res.data]);
     } catch (error) {
       console.error(error);
       alert(tx("Maktab qo'shishda xatolik"));
@@ -381,7 +383,7 @@ function AdminDashboard() {
 
   const handleCreateClass = async () => {
     try {
-      await api.post("admin/classes/", {
+      const res = await api.post("admin/classes/", {
         ...newClass,
         school: Number(newClass.school),
         name: Number(newClass.name),
@@ -397,7 +399,7 @@ function AdminDashboard() {
         duration_minutes: 60,
         is_active: true,
       });
-      fetchClasses();
+      setClasses((prev) => [...prev, res.data]);
     } catch (error) {
       console.error(error);
       alert(tx("Sinf qo'shishda xatolik"));
@@ -406,7 +408,7 @@ function AdminDashboard() {
 
   const handleCreateSection = async () => {
     try {
-      await api.post("admin/class-sections/", {
+      const res = await api.post("admin/class-sections/", {
         ...newSection,
         school_class: Number(newSection.school_class),
       });
@@ -415,7 +417,7 @@ function AdminDashboard() {
         name: "A",
         is_active: true,
       });
-      fetchClasses();
+      setSections((prev) => [...prev, res.data]);
     } catch (error) {
       console.error(error);
       alert(tx("Sinf harfi qo'shishda xatolik"));
@@ -425,12 +427,14 @@ function AdminDashboard() {
   const handleSaveRegion = async (item) => {
     try {
       setSavingRegionId(item.id);
-      await api.patch(`admin/regions/${item.id}/`, {
+      const res = await api.patch(`admin/regions/${item.id}/`, {
         name_uz: item.name_uz,
         name_ru: item.name_ru,
         is_active: item.is_active,
       });
-      await fetchOrganizations();
+      setRegions((prev) =>
+        prev.map((region) => (region.id === item.id ? res.data : region))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Viloyatni saqlashda xatolik"));
@@ -442,13 +446,15 @@ function AdminDashboard() {
   const handleSaveDistrict = async (item) => {
     try {
       setSavingDistrictId(item.id);
-      await api.patch(`admin/districts/${item.id}/`, {
+      const res = await api.patch(`admin/districts/${item.id}/`, {
         region: Number(item.region),
         name_uz: item.name_uz,
         name_ru: item.name_ru,
         is_active: item.is_active,
       });
-      await fetchOrganizations();
+      setDistricts((prev) =>
+        prev.map((district) => (district.id === item.id ? res.data : district))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Tuman/Shaharni saqlashda xatolik"));
@@ -460,13 +466,15 @@ function AdminDashboard() {
   const handleSaveSchool = async (item) => {
     try {
       setSavingSchoolId(item.id);
-      await api.patch(`admin/schools/${item.id}/`, {
+      const res = await api.patch(`admin/schools/${item.id}/`, {
         district: Number(item.district),
         name_uz: item.name_uz,
         name_ru: item.name_ru,
         is_active: item.is_active,
       });
-      await fetchOrganizations();
+      setSchools((prev) =>
+        prev.map((school) => (school.id === item.id ? res.data : school))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Maktabni saqlashda xatolik"));
@@ -478,7 +486,7 @@ function AdminDashboard() {
   const handleSaveClass = async (item) => {
     try {
       setSavingClassId(item.id);
-      await api.patch(`admin/classes/${item.id}/`, {
+      const res = await api.patch(`admin/classes/${item.id}/`, {
         school: Number(item.school),
         name: Number(item.name),
         student_limit: Number(item.student_limit),
@@ -486,7 +494,11 @@ function AdminDashboard() {
         duration_minutes: Number(item.duration_minutes),
         is_active: item.is_active,
       });
-      await fetchClasses();
+      setClasses((prev) =>
+        prev.map((schoolClass) =>
+          schoolClass.id === item.id ? res.data : schoolClass
+        )
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Sinfni saqlashda xatolik"));
@@ -498,7 +510,7 @@ function AdminDashboard() {
   const handleSaveSection = async (item) => {
     try {
       setSavingSectionId(item.id);
-      await api.patch(
+      const res = await api.patch(
         `admin/class-sections/${item.id}/`,
         {
           school_class: Number(item.school_class),
@@ -506,7 +518,9 @@ function AdminDashboard() {
           is_active: item.is_active,
         }
       );
-      await fetchClasses();
+      setSections((prev) =>
+        prev.map((section) => (section.id === item.id ? res.data : section))
+      );
     } catch (error) {
       console.error(error);
       alert(tx("Sinf harfini saqlashda xatolik"));

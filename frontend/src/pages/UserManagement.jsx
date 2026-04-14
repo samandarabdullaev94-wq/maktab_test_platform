@@ -118,7 +118,7 @@ function UserManagement() {
     try {
       setCreating(true);
 
-      await api.post("admin/users/", newUser);
+      const res = await api.post("admin/users/", newUser);
 
       setNewUser({
         username: "",
@@ -137,7 +137,7 @@ function UserManagement() {
         can_export_excel: false,
       });
 
-      fetchUsers();
+      setUsers((prev) => [...prev, res.data]);
       alert(tx("Yangi foydalanuvchi qo'shildi"));
     } catch (error) {
       console.error("User yaratishda xatolik:", error);
@@ -150,8 +150,12 @@ function UserManagement() {
   const handleSave = async (user) => {
     try {
       setSavingId(user.id);
-      await api.patch(`admin/users/${user.id}/`, user);
-      fetchUsers();
+      const res = await api.patch(`admin/users/${user.id}/`, user);
+      setUsers((prev) =>
+        prev.map((item) =>
+          item.id === user.id ? { ...item, ...res.data } : item
+        )
+      );
     } catch (error) {
       console.error("User saqlashda xatolik:", error);
       alert(tx("User saqlashda xatolik"));
@@ -167,7 +171,7 @@ function UserManagement() {
 
     try {
       await api.delete(`admin/users/${user.id}/`);
-      await fetchUsers();
+      setUsers((prev) => prev.filter((item) => item.id !== user.id));
     } catch (error) {
       console.error("User o'chirishda xatolik:", error);
       alert(error.response?.data?.error || tx("User o'chirishda xatolik"));
