@@ -40,22 +40,42 @@ function TestSessionPage() {
 
         const session = sessionRes.data;
 
+        if (session.finished_at) {
+          setError("Bu test sessiyasi yakunlangan");
+          return;
+        }
+
         setTestsMap(testsObject);
         setSessionData(session);
 
         const savedStateRaw = localStorage.getItem(storageKey);
+        const serverAnswers = (session.saved_answers || []).reduce(
+          (acc, item) => {
+            if (item.question_id && item.answer_id) {
+              acc[item.question_id] = item.answer_id;
+            }
+            return acc;
+          },
+          {}
+        );
+        let savedState = {};
 
         if (savedStateRaw) {
-          const savedState = JSON.parse(savedStateRaw);
-
-          setAnswers(savedState.answers || {});
-          setCurrentQuestionIndex(savedState.currentQuestionIndex || 0);
-          setActiveSubjectId(
-            savedState.activeSubjectId || session.selected_test_ids?.[0] || null
-          );
-        } else {
-          setActiveSubjectId(session.selected_test_ids?.[0] || null);
+          try {
+            savedState = JSON.parse(savedStateRaw) || {};
+          } catch (parseError) {
+            console.error(parseError);
+          }
         }
+
+        setAnswers({
+          ...serverAnswers,
+          ...(savedState.answers || {}),
+        });
+        setCurrentQuestionIndex(savedState.currentQuestionIndex || 0);
+        setActiveSubjectId(
+          savedState.activeSubjectId || session.selected_test_ids?.[0] || null
+        );
       } catch (err) {
         console.error(err);
         setError("Session ma'lumotlarini olishda xatolik yuz berdi");
@@ -88,6 +108,10 @@ function TestSessionPage() {
   const currentQuestion = filteredQuestions[currentQuestionIndex];
 
   const endTimestamp = useMemo(() => {
+    if (typeof sessionData?.remaining_time_seconds === "number") {
+      return Date.now() + sessionData.remaining_time_seconds * 1000;
+    }
+
     if (!sessionData?.started_at || !sessionData?.total_time_seconds) return null;
     const started = new Date(sessionData.started_at).getTime();
     return started + sessionData.total_time_seconds * 1000;
@@ -156,10 +180,25 @@ function TestSessionPage() {
   const handleSelectAnswer = (answerId) => {
     if (!currentQuestion) return;
 
+    const questionId = currentQuestion.id;
+
     setAnswers((prev) => ({
       ...prev,
-      [currentQuestion.id]: answerId,
+      [questionId]: answerId,
     }));
+
+    api
+      .post(`test-session/${sessionId}/answer/`, {
+        question_id: questionId,
+        answer_id: answerId,
+      })
+      .catch((err) => {
+        console.error(err);
+
+        if (err.response?.status === 400 || err.response?.status === 404) {
+          setError(err.response?.data?.error || "Test javobini saqlashda xatolik yuz berdi");
+        }
+      });
   };
 
   const handleQuestionJump = (index) => {

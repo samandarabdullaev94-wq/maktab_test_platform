@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Certificate, TestSession
 from tests_app.models import Question
@@ -48,6 +49,9 @@ class SessionQuestionSerializer(serializers.ModelSerializer):
 
 class TestSessionDetailSerializer(serializers.ModelSerializer):
     questions = serializers.SerializerMethodField()
+    saved_answers = serializers.SerializerMethodField()
+    remaining_time_seconds = serializers.SerializerMethodField()
+    is_expired = serializers.SerializerMethodField()
 
     class Meta:
         model = TestSession
@@ -59,6 +63,10 @@ class TestSessionDetailSerializer(serializers.ModelSerializer):
             'selected_test_ids',
             'total_time_seconds',
             'started_at',
+            'finished_at',
+            'remaining_time_seconds',
+            'is_expired',
+            'saved_answers',
             'questions',
         ]
 
@@ -72,6 +80,23 @@ class TestSessionDetailSerializer(serializers.ModelSerializer):
             many=True,
             context=self.context
         ).data
+
+    def get_saved_answers(self, obj):
+        return [
+            {
+                "question_id": answer.question_id,
+                "answer_id": answer.selected_answer_id,
+            }
+            for answer in obj.answers.all()
+            if answer.selected_answer_id
+        ]
+
+    def get_remaining_time_seconds(self, obj):
+        elapsed_seconds = int((timezone.now() - obj.started_at).total_seconds())
+        return max(0, obj.total_time_seconds - elapsed_seconds)
+
+    def get_is_expired(self, obj):
+        return self.get_remaining_time_seconds(obj) <= 0
 
 
 class CertificateSerializer(serializers.ModelSerializer):

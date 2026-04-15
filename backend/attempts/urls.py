@@ -7,6 +7,7 @@ from .views import (
     ExportResultsExcelAPIView,
     start_test_session,
     get_test_session,
+    save_test_session_answer,
     submit_test_session,
 )
 
@@ -19,5 +20,6 @@ urlpatterns = [
 
     path("start-test-session/", start_test_session, name="start-test-session"),
     path("test-session/<int:session_id>/", get_test_session, name="get-test-session"),
+    path("test-session/<int:session_id>/answer/", save_test_session_answer, name="save-test-session-answer"),
     path("test-session/<int:session_id>/submit/", submit_test_session, name="submit-test-session"),
 ]

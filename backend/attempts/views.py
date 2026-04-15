@@ -54,6 +54,11 @@ def build_certificate_qr_url(verify_url):
     )
 
 
+def get_session_remaining_seconds(session):
+    elapsed_seconds = int((timezone.now() - session.started_at).total_seconds())
+    return max(0, session.total_time_seconds - elapsed_seconds)
+
+
 def issue_certificate_if_eligible(
     *,
     request,
@@ -525,7 +530,7 @@ def start_test_session(request):
 @permission_classes([AllowAny])
 def get_test_session(request, session_id):
     try:
-        session = TestSession.objects.get(pk=session_id)
+        session = TestSession.objects.prefetch_related("answers").get(pk=session_id)
     except TestSession.DoesNotExist:
         return Response(
             {"error": "Session topilmadi"},
@@ -534,6 +539,67 @@ def get_test_session(request, session_id):
 
     serializer = TestSessionDetailSerializer(session, context={"request": request})
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def save_test_session_answer(request, session_id):
+    try:
+        session = TestSession.objects.get(pk=session_id)
+    except TestSession.DoesNotExist:
+        return Response(
+            {"error": "Session topilmadi"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if session.finished_at:
+        return Response(
+            {"error": "Test sessiyasi yakunlangan"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if get_session_remaining_seconds(session) <= 0:
+        return Response(
+            {"error": "Test vaqti tugagan"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    question_id = request.data.get("question_id")
+    answer_id = request.data.get("answer_id")
+
+    if not question_id or not answer_id:
+        return Response(
+            {"error": "question_id va answer_id majburiy"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    selected_test_ids = []
+    for test_id in session.selected_test_ids:
+        try:
+            selected_test_ids.append(int(test_id))
+        except (TypeError, ValueError):
+            continue
+
+    try:
+        question = Question.objects.get(pk=question_id, test_id__in=selected_test_ids)
+        answer = Answer.objects.get(pk=answer_id, question=question)
+    except (Question.DoesNotExist, Answer.DoesNotExist):
+        return Response(
+            {"error": "Javob session savollariga mos emas"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    TestSessionAnswer.objects.update_or_create(
+        session=session,
+        question=question,
+        defaults={"selected_answer": answer},
+    )
+
+    return Response({
+        "question_id": question.id,
+        "answer_id": answer.id,
+    })
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -554,9 +620,6 @@ def submit_test_session(request, session_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Session javoblarini tozalaymiz va qayta yozamiz
-    TestSessionAnswer.objects.filter(session=session).delete()
-
     saved_answers = []
     session_attempts = []
     overall_correct_count = 0
@@ -573,37 +636,54 @@ def submit_test_session(request, session_id):
         test_id__in=selected_test_ids
     ).count()
 
-    for item in answers:
-        question_id = item.get("question_id")
-        answer_id = item.get("answer_id")
+    if answers:
+        # Session javoblarini tozalaymiz va qayta yozamiz
+        TestSessionAnswer.objects.filter(session=session).delete()
 
-        if not question_id or not answer_id:
-            continue
+        for item in answers:
+            question_id = item.get("question_id")
+            answer_id = item.get("answer_id")
 
-        try:
-            question = Question.objects.get(pk=question_id)
-
-            # Faqat session ichidagi fan savollarigagina ruxsat
-            if question.test_id not in selected_test_ids:
+            if not question_id or not answer_id:
                 continue
 
-            answer = Answer.objects.get(pk=answer_id, question=question)
-        except (Question.DoesNotExist, Answer.DoesNotExist):
-            continue
+            try:
+                question = Question.objects.get(pk=question_id)
 
-        TestSessionAnswer.objects.create(
+                # Faqat session ichidagi fan savollarigagina ruxsat
+                if question.test_id not in selected_test_ids:
+                    continue
+
+                answer = Answer.objects.get(pk=answer_id, question=question)
+            except (Question.DoesNotExist, Answer.DoesNotExist):
+                continue
+
+            TestSessionAnswer.objects.create(
+                session=session,
+                question=question,
+                selected_answer=answer,
+            )
+
+            saved_answers.append({
+                "question": question,
+                "answer": answer,
+            })
+
+            if answer.is_correct:
+                overall_correct_count += 1
+    else:
+        for session_answer in TestSessionAnswer.objects.filter(
             session=session,
-            question=question,
-            selected_answer=answer,
-        )
+            question__test_id__in=selected_test_ids,
+            selected_answer__isnull=False,
+        ).select_related("question", "selected_answer"):
+            saved_answers.append({
+                "question": session_answer.question,
+                "answer": session_answer.selected_answer,
+            })
 
-        saved_answers.append({
-            "question": question,
-            "answer": answer,
-        })
-
-        if answer.is_correct:
-            overall_correct_count += 1
+            if session_answer.selected_answer.is_correct:
+                overall_correct_count += 1
 
     session.finished_at = timezone.now()
     session.save()
