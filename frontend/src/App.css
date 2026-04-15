@@ -1,6 +1,7 @@
 html,
 body {
   overflow-x: hidden;
+  padding-top: 0;
   scrollbar-width: thin;
   scrollbar-color: #3b82f6 transparent;
 }
@@ -32,7 +33,7 @@ body {
   padding: 10px 24px;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--app-border);
 }
@@ -216,6 +217,7 @@ body {
 .home-seo-content {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
   gap: 16px;
   margin-bottom: 22px;
 }
@@ -224,11 +226,13 @@ body {
   background: var(--app-surface);
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  padding: 22px 20px;
+  height: auto;
+  min-height: unset;
+  padding: 20px 18px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  justify-content: flex-start;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
@@ -276,13 +280,15 @@ body {
 }
 
 .home-seo-footer {
-  margin: 0 auto 18px;
+  margin: 20px auto 18px;
   display: flex;
   justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
   color: var(--app-muted-text);
   font-size: 14px;
+  text-align: center;
+  position: relative;
 }
 
 .home-seo-footer strong {
