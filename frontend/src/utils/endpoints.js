@@ -1,8 +1,10 @@
-const DEFAULT_API_BASE = "http://127.0.0.1:8000/api/";
+const API_BASE = import.meta.env.VITE_API_URL;
 
-export const API_BASE = (
-  import.meta.env.VITE_API_URL || DEFAULT_API_BASE
-).replace(/\/?$/, "/");
+if (!API_BASE) {
+  throw new Error("VITE_API_URL is not defined");
+}
+
+export { API_BASE };
 
 export const ENDPOINTS = {
   AUTH_REFRESH: "refresh/",

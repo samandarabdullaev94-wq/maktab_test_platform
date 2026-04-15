@@ -130,15 +130,28 @@ function SettingsSection({
             </div>
           </div>
 
-          <div className="admin-field" style={{ marginTop: "20px" }}>
-            <label>{tx("Running text matni")}</label>
-            <textarea
-              className="admin-textarea"
-              name="ticker_text"
-              value={siteSettings.ticker_text}
-              onChange={onSettingsChange}
-              rows={4}
-            />
+          <div className="admin-grid-2" style={{ marginTop: "20px" }}>
+            <div className="admin-field">
+              <label>{tx("Running text matni (UZ)")}</label>
+              <textarea
+                className="admin-textarea"
+                name="ticker_text_uz"
+                value={siteSettings.ticker_text_uz}
+                onChange={onSettingsChange}
+                rows={4}
+              />
+            </div>
+
+            <div className="admin-field">
+              <label>{tx("Running text matni (RU)")}</label>
+              <textarea
+                className="admin-textarea"
+                name="ticker_text_ru"
+                value={siteSettings.ticker_text_ru}
+                onChange={onSettingsChange}
+                rows={4}
+              />
+            </div>
           </div>
 
           <div className="admin-field" style={{ marginTop: "20px" }}>

@@ -56,3 +56,40 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         "updated_at",
         "required_subject_count",
     )
+    fieldsets = (
+        (
+            "Asosiy sozlamalar",
+            {
+                "fields": (
+                    "site_name",
+                    "header_phone",
+                    "telegram_url",
+                    "instagram_url",
+                    "required_subject_count",
+                )
+            },
+        ),
+        (
+            "Running text",
+            {
+                "fields": (
+                    "ticker_enabled",
+                    "ticker_text",
+                    "ticker_text_uz",
+                    "ticker_text_ru",
+                )
+            },
+        ),
+        (
+            "Sertifikat",
+            {
+                "fields": (
+                    "certificate_enabled",
+                    "certificate_passing_percentage",
+                    "certificate_template",
+                    "certificate_public_base_url",
+                    "certificate_lookup_path",
+                )
+            },
+        ),
+    )

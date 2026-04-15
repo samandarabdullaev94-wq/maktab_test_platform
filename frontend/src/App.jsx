@@ -20,7 +20,7 @@ import LoginPage from "./pages/LoginPage";
 import StaffPage from "./pages/StaffPage";
 
 function HomePage() {
-  const { t } = useI18n();
+  const { language, t } = useI18n();
   const { resolvedTheme } = useTheme();
   const [tests, setTests] = useState([]);
   const [regions, setRegions] = useState([]);
@@ -33,6 +33,8 @@ function HomePage() {
   const [error, setError] = useState("");
   const [siteSettings, setSiteSettings] = useState({
     ticker_text: "",
+    ticker_text_uz: "",
+    ticker_text_ru: "",
     ticker_enabled: false,
     required_subject_count: 3,
   });
@@ -54,15 +56,17 @@ function HomePage() {
 
   const fieldStyle = {
     width: "100%",
-    height: "56px",
-    padding: "14px 16px",
-    borderRadius: "var(--app-radius-md)",
+    height: "54px",
+    padding: "13px 15px",
+    borderRadius: "8px",
     border: "1px solid var(--app-control-border)",
     fontSize: "16px",
     boxSizing: "border-box",
     outline: "none",
     background: "var(--app-control-bg)",
     color: "var(--app-text)",
+    boxShadow: "0 1px 0 rgba(15, 23, 42, 0.02)",
+    transition: "border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease",
   };
 
   useEffect(() => {
@@ -76,6 +80,9 @@ function HomePage() {
         setRegions(regionsRes.data);
         setSiteSettings({
           ticker_text: settingsRes.data.ticker_text || "",
+          ticker_text_uz:
+            settingsRes.data.ticker_text_uz || settingsRes.data.ticker_text || "",
+          ticker_text_ru: settingsRes.data.ticker_text_ru || "",
           ticker_enabled: !!settingsRes.data.ticker_enabled,
           required_subject_count: settingsRes.data.required_subject_count || 3,
         });
@@ -295,6 +302,10 @@ const handleStartSelected = async () => {
 
   const isFanEnabled =
     !!regionId && !!districtId && !!schoolId && !!classId && !!sectionId;
+  const tickerText =
+    language === "ru"
+      ? siteSettings.ticker_text_ru || siteSettings.ticker_text
+      : siteSettings.ticker_text_uz || siteSettings.ticker_text;
 
   if (loading) {
     return (
@@ -321,7 +332,7 @@ const handleStartSelected = async () => {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <div style={{ width: "100%", maxWidth: "1280px", margin: "0 auto" }}>
+      <div className="home-shell">
         <div
           className="home-logo-section"
           style={{
@@ -346,7 +357,7 @@ const handleStartSelected = async () => {
             >
               <img
                 src={logoSrc}
-                alt="e-bilimtest.uz online test platformasi logosi"
+                alt={t("home.logoAlt")}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
@@ -362,30 +373,23 @@ const handleStartSelected = async () => {
         </div>
 
         <section className="home-seo-hero" aria-labelledby="home-seo-title">
-          <p className="home-seo-kicker">e bilimtest uz · e-bilimtest · ebilimtest</p>
-          <h1 id="home-seo-title">
-            e-bilimtest.uz — maktab o‘quvchilari uchun online test,
-            sertifikat va TOP reyting platformasi
-          </h1>
-          <p>
-            e-bilimtest.uz o‘quvchilarga bilim darajasini online test orqali
-            tekshirish, yuqori natija uchun sertifikat olish va respublika
-            bo‘yicha reytingdagi o‘rnini kuzatishga yordam beradi.
-          </p>
+          <h1 id="home-seo-title">{t("home.hero.title")}</h1>
+          <p>{t("home.hero.subtitle")}</p>
         </section>
 
         <div
+          className="home-form-card"
           style={{
-            maxWidth: "1180px",
             margin: "0 auto 26px",
             background: "var(--app-surface)",
             border: "1px solid var(--app-border)",
-            borderRadius: "var(--app-radius-lg)",
-            padding: "30px 28px 24px",
-            boxShadow: "var(--app-card-shadow)",
+            borderRadius: "8px",
+            padding: "28px 28px 24px",
+            boxShadow: "0 18px 45px rgba(15, 23, 42, 0.08)",
           }}
         >
           <h2
+            className="home-form-title"
             style={{
               marginTop: 0,
               marginBottom: "24px",
@@ -406,8 +410,9 @@ const handleStartSelected = async () => {
               gap: "18px",
             }}
           >
-            <div>
+            <div className="home-field">
               <label
+                className="home-label"
                 style={{
                   display: "block",
                   marginBottom: "8px",
@@ -426,8 +431,9 @@ const handleStartSelected = async () => {
               />
             </div>
 
-            <div>
+            <div className="home-field">
               <label
+                className="home-label"
                 style={{
                   display: "block",
                   marginBottom: "8px",
@@ -524,6 +530,7 @@ const handleStartSelected = async () => {
             }}
           >
             <button
+              className="home-submit-btn"
               onClick={handleStartSelected}
               disabled={
                 selectedTests.length !== siteSettings.required_subject_count
@@ -538,7 +545,7 @@ const handleStartSelected = async () => {
                     ? "var(--app-text-inverse)"
                     : "var(--app-muted-text)",
                 border: "none",
-                borderRadius: "var(--app-radius-md)",
+                borderRadius: "8px",
                 padding: "14px 34px",
                 fontSize: "16px",
                 cursor:
@@ -557,69 +564,54 @@ const handleStartSelected = async () => {
           </div>
         </div>
 
-        <section className="home-seo-content" aria-label="e-bilimtest.uz haqida">
+        <section
+          className="home-seo-content"
+          aria-label={t("home.cards.ariaLabel")}
+        >
           <article>
-            <h2>Platforma haqida</h2>
-            <p>
-              e-bilimtest.uz — maktab o‘quvchilari uchun yaratilgan online
-              test platformasi. O‘quvchi hudud, maktab, sinf va fanlarni
-              tanlab test ishlaydi, natijasini ko‘radi va bilim darajasini
-              baholaydi.
-            </p>
+            <h2>{t("home.cards.about.title")}</h2>
+            <h3>{t("home.cards.about.subtitle")}</h3>
+            <p>{t("home.cards.about.text")}</p>
           </article>
 
           <article>
-            <h2>Qanday ishlaydi</h2>
-            <h3>Ma’lumotlarni kiriting va fanlarni tanlang</h3>
-            <p>
-              O‘quvchi kerakli maydonlarni to‘ldiradi, fanlarni tanlaydi va
-              testni boshlaydi. Test yakunida ball, foiz va umumiy natija
-              ko‘rsatiladi.
-            </p>
+            <h2>{t("home.cards.how.title")}</h2>
+            <h3>{t("home.cards.how.subtitle")}</h3>
+            <p>{t("home.cards.how.text")}</p>
           </article>
 
           <article>
-            <h2>Sertifikat tizimi</h2>
-            <h3>Yuqori natija sertifikat bilan tasdiqlanadi</h3>
-            <p>
-              Belgilangan o‘tish foizidan yuqori natija olgan o‘quvchi
-              sertifikatga ega bo‘ladi. Sertifikat keyinchalik maxsus kod va
-              QR havola orqali tekshirilishi mumkin.
-            </p>
+            <h2>{t("home.cards.certificate.title")}</h2>
+            <h3>{t("home.cards.certificate.subtitle")}</h3>
+            <p>{t("home.cards.certificate.text")}</p>
           </article>
 
           <article>
-            <h2>Reyting tizimi</h2>
-            <h3>Respublika bo‘yicha TOP natijalar</h3>
-            <p>
-              e-bilimtest platformasida yuqori ball olgan o‘quvchilar
-              respublika bo‘yicha TOP reyting ro‘yxatida ko‘rinadi. Bu
-              o‘quvchilarga o‘z bilimini solishtirish va yanada yaxshi natija
-              qilishga motivatsiya beradi.
-            </p>
+            <h2>{t("home.cards.ranking.title")}</h2>
+            <h3>{t("home.cards.ranking.subtitle")}</h3>
+            <p>{t("home.cards.ranking.text")}</p>
           </article>
         </section>
 
         <footer className="home-seo-footer">
-          <strong>e-bilimtest.uz</strong>
-          <span>e bilimtest uz · e-bilimtest · ebilimtest</span>
+          <strong>{t("home.footerBrand")}</strong>
         </footer>
       </div>
 
-      {siteSettings.ticker_enabled && siteSettings.ticker_text && (
+      {siteSettings.ticker_enabled && tickerText && (
         <div className="ticker-outer">
           <div className="ticker-wrap">
             <div className="ticker-marquee">
               <div className="ticker-group">
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
+                <span className="ticker-text">{tickerText}</span>
+                <span className="ticker-text">{tickerText}</span>
+                <span className="ticker-text">{tickerText}</span>
               </div>
 
               <div className="ticker-group">
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
-                <span className="ticker-text">{siteSettings.ticker_text}</span>
+                <span className="ticker-text">{tickerText}</span>
+                <span className="ticker-text">{tickerText}</span>
+                <span className="ticker-text">{tickerText}</span>
               </div>
             </div>
           </div>
@@ -662,5 +654,4 @@ function App() {
 }
 
 export default App;
-
 

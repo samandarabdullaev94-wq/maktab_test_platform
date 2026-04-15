@@ -143,6 +143,8 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
             "telegram_url",
             "instagram_url",
             "ticker_text",
+            "ticker_text_uz",
+            "ticker_text_ru",
             "ticker_enabled",
             "required_subject_count",
             "certificate_enabled",

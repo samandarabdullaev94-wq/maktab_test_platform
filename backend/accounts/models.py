@@ -41,6 +41,14 @@ class SiteSettings(models.Model):
     ticker_text = models.TextField(
         default="Ushbu platforma yordamida o‘z bilimingizni sinab ko‘rishingiz mumkin va o‘z reyting natijalaringiz bilan tanishib olasiz"
     )
+    ticker_text_uz = models.TextField(
+        blank=True,
+        default="Ushbu platforma yordamida o'z bilimingizni sinab ko'rishingiz mumkin va o'z reyting natijalaringiz bilan tanishib olasiz",
+    )
+    ticker_text_ru = models.TextField(
+        blank=True,
+        default="С помощью этой платформы вы можете проверить свои знания и ознакомиться со своими результатами в рейтинге",
+    )
     ticker_enabled = models.BooleanField(default=True)
     certificate_enabled = models.BooleanField(default=True)
     certificate_passing_percentage = models.PositiveIntegerField(default=60)

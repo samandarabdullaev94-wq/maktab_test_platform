@@ -39,6 +39,8 @@ const uz = {
     "Sertifikat topilmadi": "Sertifikat topilmadi",
     "Running text yoqilsin": "Running text yoqilsin",
     "Running text matni": "Running text matni",
+    "Running text matni (UZ)": "Running text matni (UZ)",
+    "Running text matni (RU)": "Running text matni (RU)",
     "Saqlash": "Saqlash",
     "Saqlanmoqda...": "Saqlanmoqda...",
     "O'chirish": "O'chirish",
@@ -225,6 +227,41 @@ const uz = {
   },
   home: {
     loadError: "Ma'lumotlarni olishda xatolik yuz berdi",
+    logoAlt: "e-bilimtest.uz online test platformasi logosi",
+    hero: {
+      title:
+        "e-bilimtest.uz - maktab o'quvchilari uchun online test, sertifikat va TOP reyting platformasi",
+      subtitle:
+        "e-bilimtest.uz o'quvchilarga bilim darajasini online test orqali tekshirish, yuqori natija uchun sertifikat olish va respublika bo'yicha reytingdagi o'rnini kuzatishga yordam beradi.",
+    },
+    cards: {
+      ariaLabel: "e-bilimtest.uz haqida",
+      about: {
+        title: "Platforma haqida",
+        subtitle: "O'quvchilar uchun ishonchli test muhiti",
+        text:
+          "e-bilimtest.uz maktab o'quvchilari uchun yaratilgan online test platformasi. O'quvchi hudud, maktab, sinf va fanlarni tanlab test ishlaydi, natijasini ko'radi va bilim darajasini baholaydi.",
+      },
+      how: {
+        title: "Qanday ishlaydi",
+        subtitle: "Ma'lumotlarni kiriting va fanlarni tanlang",
+        text:
+          "O'quvchi kerakli maydonlarni to'ldiradi, fanlarni tanlaydi va testni boshlaydi. Test yakunida ball, foiz va umumiy natija ko'rsatiladi.",
+      },
+      certificate: {
+        title: "Sertifikat tizimi",
+        subtitle: "Yuqori natija sertifikat bilan tasdiqlanadi",
+        text:
+          "Belgilangan o'tish foizidan yuqori natija olgan o'quvchi sertifikatga ega bo'ladi. Sertifikat keyinchalik maxsus kod va QR havola orqali tekshirilishi mumkin.",
+      },
+      ranking: {
+        title: "Reyting tizimi",
+        subtitle: "Respublika bo'yicha TOP natijalar",
+        text:
+          "e-bilimtest platformasida yuqori ball olgan o'quvchilar respublika bo'yicha TOP reyting ro'yxatida ko'rinadi. Bu o'quvchilarga o'z bilimini solishtirish va yanada yaxshi natija qilishga motivatsiya beradi.",
+      },
+    },
+    footerBrand: "e-bilimtest.uz",
     title: "Ma'lumotlaringiz",
     fullName: "Ism familiya",
     fullNamePlaceholder: "Ism familiya",
