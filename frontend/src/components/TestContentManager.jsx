@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CustomSelect from "./CustomSelect";
 import { useI18n } from "../i18n/useI18n";
 import api from "../utils/api";
@@ -61,11 +61,11 @@ function TestContentManager({ classes = [], classLoading = false }) {
   });
 
   const [savingId, setSavingId] = useState(null);
-  const [expandedNodes, setExpandedNodes] = useState({
-    directions: {},
-    subjects: {},
-    tests: {},
-    questions: {},
+  const [managerPath, setManagerPath] = useState({
+    directionId: null,
+    subjectId: null,
+    testId: null,
+    questionId: null,
   });
   const [openAddForm, setOpenAddForm] = useState({
     direction: false,
@@ -104,33 +104,45 @@ function TestContentManager({ classes = [], classLoading = false }) {
     fetchAll();
   }, []);
 
-  const isExpanded = (level, id) => Boolean(expandedNodes[level]?.[id]);
+  const setNodeExpanded = (level, id) => {
+    const numericId = Number(id);
 
-  const setNodeExpanded = (level, id, expanded = true) => {
-    setExpandedNodes((prev) => ({
-      ...prev,
-      [level]: {
-        ...prev[level],
-        [id]: expanded,
-      },
-    }));
-  };
+    setManagerPath((prev) => {
+      if (level === "directions") {
+        return {
+          directionId: numericId,
+          subjectId: null,
+          testId: null,
+          questionId: null,
+        };
+      }
 
-  const toggleNode = (level, id) => {
-    setExpandedNodes((prev) => ({
-      ...prev,
-      [level]: {
-        ...prev[level],
-        [id]: !prev[level]?.[id],
-      },
-    }));
-  };
+      if (level === "subjects") {
+        return {
+          ...prev,
+          subjectId: numericId,
+          testId: null,
+          questionId: null,
+        };
+      }
 
-  const handleTreeKeyDown = (event, level, id) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      toggleNode(level, id);
-    }
+      if (level === "tests") {
+        return {
+          ...prev,
+          testId: numericId,
+          questionId: null,
+        };
+      }
+
+      if (level === "questions") {
+        return {
+          ...prev,
+          questionId: numericId,
+        };
+      }
+
+      return prev;
+    });
   };
 
   const toggleAddForm = (level, id = true) => {
@@ -416,10 +428,20 @@ function TestContentManager({ classes = [], classLoading = false }) {
     handleDelete(
       `admin/directions/${item.id}/`,
       "Yo'nalishni o'chirishni tasdiqlaysizmi?",
-      () =>
+      () => {
         setDirections((prev) =>
           prev.filter((direction) => direction.id !== item.id)
-        )
+        );
+
+        if (Number(managerPath.directionId) === Number(item.id)) {
+          setManagerPath({
+            directionId: null,
+            subjectId: null,
+            testId: null,
+            questionId: null,
+          });
+        }
+      }
     );
   };
 
@@ -427,7 +449,20 @@ function TestContentManager({ classes = [], classLoading = false }) {
     handleDelete(
       `admin/subjects/${item.id}/`,
       "Fanni o'chirishni tasdiqlaysizmi?",
-      () => setSubjects((prev) => prev.filter((subject) => subject.id !== item.id))
+      () => {
+        setSubjects((prev) =>
+          prev.filter((subject) => subject.id !== item.id)
+        );
+
+        if (Number(managerPath.subjectId) === Number(item.id)) {
+          setManagerPath((prev) => ({
+            ...prev,
+            subjectId: null,
+            testId: null,
+            questionId: null,
+          }));
+        }
+      }
     );
   };
 
@@ -435,7 +470,17 @@ function TestContentManager({ classes = [], classLoading = false }) {
     handleDelete(
       `admin/tests/${item.id}/`,
       "Testni o'chirishni tasdiqlaysizmi?",
-      () => setTests((prev) => prev.filter((test) => test.id !== item.id))
+      () => {
+        setTests((prev) => prev.filter((test) => test.id !== item.id));
+
+        if (Number(managerPath.testId) === Number(item.id)) {
+          setManagerPath((prev) => ({
+            ...prev,
+            testId: null,
+            questionId: null,
+          }));
+        }
+      }
     );
   };
 
@@ -450,6 +495,13 @@ function TestContentManager({ classes = [], classLoading = false }) {
         setAnswers((prev) =>
           prev.filter((answer) => Number(answer.question) !== Number(item.id))
         );
+
+        if (Number(managerPath.questionId) === Number(item.id)) {
+          setManagerPath((prev) => ({
+            ...prev,
+            questionId: null,
+          }));
+        }
       }
     );
   };
@@ -509,6 +561,150 @@ function TestContentManager({ classes = [], classLoading = false }) {
     [questions]
   );
 
+  const selectedDirection = directions.find(
+    (direction) => Number(direction.id) === Number(managerPath.directionId)
+  );
+  const selectedSubject = subjects.find(
+    (subject) => Number(subject.id) === Number(managerPath.subjectId)
+  );
+  const selectedTest = tests.find(
+    (test) => Number(test.id) === Number(managerPath.testId)
+  );
+  const selectedQuestion = questions.find(
+    (question) => Number(question.id) === Number(managerPath.questionId)
+  );
+
+  const currentSubjects = selectedDirection
+    ? subjectsByDirection[selectedDirection.id] || []
+    : [];
+  const currentTests = selectedSubject
+    ? testsBySubject[selectedSubject.id] || []
+    : [];
+  const currentQuestions = selectedTest
+    ? questionsByTest[selectedTest.id] || []
+    : [];
+  const currentAnswers = selectedQuestion
+    ? answersByQuestion[selectedQuestion.id] || []
+    : [];
+
+  const getClassLabel = (test) => {
+    const selectedClass = classOptions.find(
+      (item) => Number(item.id) === Number(test?.school_class)
+    );
+
+    return selectedClass?.label || test?.class_name || tx("Sinf biriktirilmagan");
+  };
+
+  const getQuestionPreview = (question) => {
+    const text = question.text || tx("Savol matni yo'q");
+    return text.length > 120 ? `${text.slice(0, 120)}...` : text;
+  };
+
+  const goToDirections = () =>
+    setManagerPath({
+      directionId: null,
+      subjectId: null,
+      testId: null,
+      questionId: null,
+    });
+
+  const goToDirection = (directionId) =>
+    setManagerPath({
+      directionId: Number(directionId),
+      subjectId: null,
+      testId: null,
+      questionId: null,
+    });
+
+  const goToSubject = (subjectId) =>
+    setManagerPath((prev) => ({
+      ...prev,
+      subjectId: Number(subjectId),
+      testId: null,
+      questionId: null,
+    }));
+
+  const goToTest = (testId) =>
+    setManagerPath((prev) => ({
+      ...prev,
+      testId: Number(testId),
+      questionId: null,
+    }));
+
+  const goToQuestion = (questionId) =>
+    setManagerPath((prev) => ({
+      ...prev,
+      questionId: Number(questionId),
+    }));
+
+  const breadcrumbItems = [
+    {
+      label: tx("Yo'nalishlar"),
+      onClick: goToDirections,
+      active: !selectedDirection,
+    },
+  ];
+
+  if (selectedDirection) {
+    breadcrumbItems.push({
+      label: selectedDirection.name_uz || selectedDirection.name_ru || tx("Yo'nalish"),
+      onClick: () => goToDirection(selectedDirection.id),
+      active: !selectedSubject,
+    });
+  }
+
+  if (selectedSubject) {
+    breadcrumbItems.push({
+      label: selectedSubject.name_uz || selectedSubject.name_ru || tx("Fan"),
+      onClick: () => goToSubject(selectedSubject.id),
+      active: !selectedTest,
+    });
+  }
+
+  if (selectedTest) {
+    breadcrumbItems.push({
+      label: selectedTest.title || tx("Test"),
+      onClick: () => goToTest(selectedTest.id),
+      active: !selectedQuestion,
+    });
+  }
+
+  if (selectedQuestion) {
+    breadcrumbItems.push({
+      label: `${tx("Savol")} #${selectedQuestion.order || selectedQuestion.id}`,
+      active: true,
+    });
+  }
+
+  const renderDrillShell = (content) => (
+    <div className="admin-card admin-drill-card">
+      <div className="admin-content-list-head admin-drill-head">
+        <div>
+          <h2 className="admin-card-title">{tx("Yo'nalish / Fan / Test / Savol / Javob")}</h2>
+          <p>{tx("Har bir bosqich alohida ochiladi va faqat tanlangan kontent ko'rsatiladi")}</p>
+          <nav className="admin-drill-breadcrumb" aria-label={tx("Kontent yo'li")}>
+            {breadcrumbItems.map((item, index) => (
+              <span className="admin-drill-breadcrumb-item" key={`${item.label}-${index}`}>
+                {index > 0 && <span className="admin-drill-breadcrumb-separator">/</span>}
+                {item.onClick && !item.active ? (
+                  <button type="button" onClick={item.onClick}>{item.label}</button>
+                ) : (
+                  <strong>{item.label}</strong>
+                )}
+              </span>
+            ))}
+          </nav>
+        </div>
+        {!selectedDirection && <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("direction")}>+ {tx("Yo'nalish qo'shish")}</button>}
+        {selectedDirection && !selectedSubject && <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("subject", selectedDirection.id)}>+ {tx("Fan qo'shish")}</button>}
+        {selectedSubject && !selectedTest && <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("test", selectedSubject.id)}>+ {tx("Test qo'shish")}</button>}
+        {selectedTest && !selectedQuestion && <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("question", selectedTest.id)}>+ {tx("Savol qo'shish")}</button>}
+        {selectedQuestion && <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("answer", selectedQuestion.id)}>+ {tx("Javob qo'shish")}</button>}
+      </div>
+      {content}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="admin-card">
@@ -517,224 +713,285 @@ function TestContentManager({ classes = [], classLoading = false }) {
     );
   }
 
-  return (
-    <div className="admin-card">
-      <div className="admin-content-list-head">
-        <div>
-          <h2 className="admin-card-title">{tx("Yo'nalish / Fan / Test / Savol / Javob")}</h2>
-          <p>{tx("Kontent ota-ona bog'lanishlari bo'yicha tartiblangan")}</p>
-        </div>
-        <button type="button" className="admin-primary-btn" onClick={() => toggleAddForm("direction")}>+ {tx("Yo'nalish qo'shish")}</button>
-      </div>
+  if (!selectedDirection) {
+    return renderDrillShell(
+      <section className="admin-drill-screen">
+        {openAddForm.direction && (
+          <div className="admin-drill-add-form">
+            <input className="admin-input" value={newDirection.name_uz} onChange={(event) => setNewDirection((prev) => ({ ...prev, name_uz: event.target.value }))} placeholder={tx("Yo'nalish nomi (UZ)")} />
+            <input className="admin-input" value={newDirection.name_ru} onChange={(event) => setNewDirection((prev) => ({ ...prev, name_ru: event.target.value }))} placeholder={tx("Yo'nalish nomi (RU)")} />
+            <label className="admin-check-field"><input type="checkbox" checked={newDirection.is_active} onChange={(event) => setNewDirection((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
+            <button type="button" className="admin-primary-btn" onClick={handleCreateDirection}>+ {tx("Yo'nalish")}</button>
+          </div>
+        )}
 
-      {openAddForm.direction && (
-        <div className="admin-tree-add-form admin-tree-add-root">
-          <input className="admin-input" value={newDirection.name_uz} onChange={(event) => setNewDirection((prev) => ({ ...prev, name_uz: event.target.value }))} placeholder={tx("Yo'nalish nomi (UZ)")} />
-          <input className="admin-input" value={newDirection.name_ru} onChange={(event) => setNewDirection((prev) => ({ ...prev, name_ru: event.target.value }))} placeholder={tx("Yo'nalish nomi (RU)")} />
-          <label className="admin-check-field"><input type="checkbox" checked={newDirection.is_active} onChange={(event) => setNewDirection((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
-          <button type="button" className="admin-primary-btn" onClick={handleCreateDirection}>+ {tx("Yo'nalish")}</button>
-        </div>
-      )}
+        {directions.length === 0 ? (
+          <div className="admin-table-empty">{tx("Yo'nalishlar topilmadi")}</div>
+        ) : (
+          <div className="admin-drill-list">
+            {directions.map((direction) => {
+              const directionSubjects = subjectsByDirection[direction.id] || [];
 
-      {directions.length === 0 ? (
-        <div className="admin-table-empty">{tx("Yo'nalishlar topilmadi")}</div>
-      ) : (
-        <div className="admin-content-tree">
-          {directions.map((direction) => {
-            const directionSubjects = subjectsByDirection[direction.id] || [];
-            const directionOpen = isExpanded("directions", direction.id);
-
-            return (
-              <section className="admin-tree-node admin-tree-node-direction" key={direction.id}>
-                <div className="admin-tree-row" role="button" tabIndex={0} onClick={() => toggleNode("directions", direction.id)} onKeyDown={(event) => handleTreeKeyDown(event, "directions", direction.id)}>
-                  <span className="admin-tree-toggle">{directionOpen ? "-" : "+"}</span>
-                  <div className="admin-tree-summary"><strong>{direction.name_uz || direction.name_ru || tx("Yo'nalish")}</strong><span>{directionSubjects.length} {tx("fan")}</span></div>
-                  <div className="admin-tree-fields admin-tree-fields-compact" onClick={(event) => event.stopPropagation()}>
+              return (
+                <article className="admin-drill-row" key={direction.id}>
+                  <div className="admin-drill-row-main">
+                    <div className="admin-drill-row-title">
+                      <strong>{direction.name_uz || direction.name_ru || tx("Yo'nalish")}</strong>
+                      <span>{directionSubjects.length} {tx("fan")}</span>
+                    </div>
+                    <span className={direction.is_active ? "admin-status-pill active" : "admin-status-pill"}>
+                      {direction.is_active ? tx("Faol") : tx("Nofaol")}
+                    </span>
+                  </div>
+                  <div className="admin-drill-edit-grid admin-drill-edit-grid-3">
                     <input className="admin-input" value={direction.name_uz} onChange={(event) => handleDirectionFieldChange(direction.id, "name_uz", event.target.value)} placeholder={tx("UZ nomi")} />
                     <input className="admin-input" value={direction.name_ru} onChange={(event) => handleDirectionFieldChange(direction.id, "name_ru", event.target.value)} placeholder={tx("RU nomi")} />
                     <label className="admin-check-field"><input type="checkbox" checked={direction.is_active} onChange={(event) => handleDirectionFieldChange(direction.id, "is_active", event.target.checked)} />{tx("Faol")}</label>
                   </div>
-                  <div className="admin-table-actions" onClick={(event) => event.stopPropagation()}>
-                    <button type="button" className="admin-primary-btn" onClick={() => { setNodeExpanded("directions", direction.id); toggleAddForm("subject", direction.id); }}>+ {tx("Fan")}</button>
+                  <div className="admin-table-actions admin-drill-actions">
                     <button type="button" className="admin-primary-btn" disabled={savingId === `direction-${direction.id}`} onClick={() => handleSaveDirection(direction)}>{savingId === `direction-${direction.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
                     <button type="button" className="admin-danger-btn" onClick={() => handleDeleteDirection(direction)}>{tx("O'chirish")}</button>
+                    <button type="button" className="admin-secondary-btn" onClick={() => goToDirection(direction.id)}>{tx("Ochish")} -&gt;</button>
                   </div>
-                </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
 
-                {directionOpen && (
-                  <div className="admin-tree-children">
-                    {openAddForm.subject === direction.id && (
-                      <div className="admin-tree-add-form">
-                        <input className="admin-input" value={newSubject.name_uz} onChange={(event) => setNewSubject((prev) => ({ ...prev, name_uz: event.target.value }))} placeholder={tx("Fan nomi (UZ)")} />
-                        <input className="admin-input" value={newSubject.name_ru} onChange={(event) => setNewSubject((prev) => ({ ...prev, name_ru: event.target.value }))} placeholder={tx("Fan nomi (RU)")} />
-                        <label className="admin-check-field"><input type="checkbox" checked={newSubject.is_active} onChange={(event) => setNewSubject((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
-                        <button type="button" className="admin-primary-btn" onClick={() => handleCreateSubject({ direction: direction.id })}>+ {tx("Fan")}</button>
-                      </div>
-                    )}
+  if (selectedDirection && !selectedSubject) {
+    return renderDrillShell(
+      <section className="admin-drill-screen">
+        {openAddForm.subject === selectedDirection.id && (
+          <div className="admin-drill-add-form">
+            <input className="admin-input" value={newSubject.name_uz} onChange={(event) => setNewSubject((prev) => ({ ...prev, name_uz: event.target.value }))} placeholder={tx("Fan nomi (UZ)")} />
+            <input className="admin-input" value={newSubject.name_ru} onChange={(event) => setNewSubject((prev) => ({ ...prev, name_ru: event.target.value }))} placeholder={tx("Fan nomi (RU)")} />
+            <label className="admin-check-field"><input type="checkbox" checked={newSubject.is_active} onChange={(event) => setNewSubject((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
+            <button type="button" className="admin-primary-btn" onClick={() => handleCreateSubject({ direction: selectedDirection.id })}>+ {tx("Fan")}</button>
+          </div>
+        )}
 
-                    {directionSubjects.length === 0 ? <div className="admin-tree-empty">{tx("Fanlar topilmadi")}</div> : directionSubjects.map((subject) => {
-                      const subjectTests = testsBySubject[subject.id] || [];
-                      const subjectOpen = isExpanded("subjects", subject.id);
+        {currentSubjects.length === 0 ? (
+          <div className="admin-table-empty">{tx("Fanlar topilmadi")}</div>
+        ) : (
+          <div className="admin-drill-list">
+            {currentSubjects.map((subject) => {
+              const subjectTests = testsBySubject[subject.id] || [];
 
-                      return (
-                        <section className="admin-tree-node admin-tree-node-subject" key={subject.id}>
-                          <div className="admin-tree-row" role="button" tabIndex={0} onClick={() => toggleNode("subjects", subject.id)} onKeyDown={(event) => handleTreeKeyDown(event, "subjects", subject.id)}>
-                            <span className="admin-tree-toggle">{subjectOpen ? "-" : "+"}</span>
-                            <div className="admin-tree-summary"><strong>{subject.name_uz || subject.name_ru || tx("Fan")}</strong><span>{subjectTests.length} {tx("test")}</span></div>
-                            <div className="admin-tree-fields admin-tree-fields-wide" onClick={(event) => event.stopPropagation()}>
-                              <input className="admin-input" value={subject.name_uz} onChange={(event) => handleSubjectFieldChange(subject.id, "name_uz", event.target.value)} placeholder={tx("UZ nomi")} />
-                              <input className="admin-input" value={subject.name_ru} onChange={(event) => handleSubjectFieldChange(subject.id, "name_ru", event.target.value)} placeholder={tx("RU nomi")} />
-                              <CustomSelect value={subject.direction} onChange={(value) => handleSubjectFieldChange(subject.id, "direction", value)} options={directions} placeholder={tx("Yo'nalish tanlang")} getOptionLabel={(item) => item.name_uz || item.name_ru || `#${item.id}`} getOptionValue={(item) => item.id} />
-                              <label className="admin-check-field"><input type="checkbox" checked={subject.is_active} onChange={(event) => handleSubjectFieldChange(subject.id, "is_active", event.target.checked)} />{tx("Faol")}</label>
-                            </div>
-                            <div className="admin-table-actions" onClick={(event) => event.stopPropagation()}>
-                              <button type="button" className="admin-primary-btn" onClick={() => { setNodeExpanded("subjects", subject.id); toggleAddForm("test", subject.id); }}>+ {tx("Test")}</button>
-                              <button type="button" className="admin-primary-btn" disabled={savingId === `subject-${subject.id}`} onClick={() => handleSaveSubject(subject)}>{savingId === `subject-${subject.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
-                              <button type="button" className="admin-danger-btn" onClick={() => handleDeleteSubject(subject)}>{tx("O'chirish")}</button>
-                            </div>
-                          </div>
-
-                          {subjectOpen && (
-                            <div className="admin-tree-children">
-                              {openAddForm.test === subject.id && (
-                                <div className="admin-tree-add-form">
-                                  <input className="admin-input" value={newTest.title} onChange={(event) => setNewTest((prev) => ({ ...prev, title: event.target.value }))} placeholder={tx("Test nomi")} />
-                                  <CustomSelect value={newTest.school_class} onChange={(value) => setNewTest((prev) => ({ ...prev, school_class: value }))} options={classOptions} placeholder={classLoading ? tx("Sinflar yuklanmoqda...") : tx("Sinf tanlang")} disabled={classLoading} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
-                                  <input className="admin-input" type="number" value={newTest.duration_minutes} onChange={(event) => setNewTest((prev) => ({ ...prev, duration_minutes: event.target.value }))} placeholder={tx("Davomiylik")} />
-                                  <label className="admin-check-field"><input type="checkbox" checked={newTest.is_active} onChange={(event) => setNewTest((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
-                                  <button type="button" className="admin-primary-btn" onClick={() => handleCreateTest({ subject: subject.id })}>+ {tx("Test")}</button>
-                                </div>
-                              )}
-
-                              {subjectTests.length === 0 ? <div className="admin-tree-empty">{tx("Testlar topilmadi")}</div> : subjectTests.map((test) => {
-                                const testQuestions = questionsByTest[test.id] || [];
-                                const testOpen = isExpanded("tests", test.id);
-                                const selectedClass = classOptions.find(
-                                  (item) =>
-                                    Number(item.id) === Number(test.school_class)
-                                );
-
-                                return (
-                                  <section className="admin-tree-node admin-tree-node-test" key={test.id}>
-                                    <div className="admin-tree-row" role="button" tabIndex={0} onClick={() => toggleNode("tests", test.id)} onKeyDown={(event) => handleTreeKeyDown(event, "tests", test.id)}>
-                                      <span className="admin-tree-toggle">{testOpen ? "-" : "+"}</span>
-                                      <div className="admin-tree-summary"><strong>{test.title || tx("Test")}</strong><span>{selectedClass?.label || test.class_name || tx("Sinf biriktirilmagan")} - {testQuestions.length} {tx("savol")}</span></div>
-                                      <div className="admin-tree-fields admin-tree-test-fields" onClick={(event) => event.stopPropagation()}>
-                                        <div className="admin-tree-class-info">
-                                          <span>{tx("Sinf")}</span>
-                                          <strong>{selectedClass?.label || test.class_name || tx("Sinf biriktirilmagan")}</strong>
-                                        </div>
-                                        <CustomSelect
-                                          value={test.school_class || ""}
-                                          onChange={(value) =>
-                                            handleTestFieldChange(
-                                              test.id,
-                                              "school_class",
-                                              value
-                                            )
-                                          }
-                                          options={classOptions}
-                                          placeholder={
-                                            classLoading
-                                              ? tx("Sinflar yuklanmoqda...")
-                                              : tx("Sinf tanlang")
-                                          }
-                                          disabled={classLoading}
-                                          getOptionLabel={(item) => item.label}
-                                          getOptionValue={(item) => item.id}
-                                        />
-                                      </div>
-                                      <div className="admin-tree-meta">{test.is_active ? tx("Faol") : tx("Nofaol")}</div>
-                                      <div className="admin-table-actions" onClick={(event) => event.stopPropagation()}>
-                                        <button type="button" className="admin-primary-btn" onClick={() => { setNodeExpanded("tests", test.id); toggleAddForm("question", test.id); }}>+ {tx("Savol")}</button>
-                                        <button type="button" className="admin-primary-btn" disabled={savingId === `test-${test.id}`} onClick={() => handleSaveTest(test)}>{savingId === `test-${test.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
-                                        <button type="button" className="admin-danger-btn" onClick={() => handleDeleteTest(test)}>{tx("O'chirish")}</button>
-                                      </div>
-                                    </div>
-
-                                    {testOpen && (
-                                      <div className="admin-tree-children">
-                                        {openAddForm.question === test.id && (
-                                          <div className="admin-tree-add-form admin-tree-add-form-question">
-                                            <input className="admin-input" type="number" value={newQuestion.order} onChange={(event) => setNewQuestion((prev) => ({ ...prev, order: event.target.value }))} placeholder={tx("Tartib")} />
-                                            <textarea className="admin-textarea" value={newQuestion.text} onChange={(event) => setNewQuestion((prev) => ({ ...prev, text: event.target.value }))} placeholder={tx("Savol matni")} />
-                                            <input className="admin-input" type="file" accept="image/*" onChange={(event) => setNewQuestion((prev) => ({ ...prev, image: event.target.files?.[0] || null }))} />
-                                            <button type="button" className="admin-primary-btn" onClick={() => handleCreateQuestion({ test: test.id })}>+ {tx("Savol")}</button>
-                                          </div>
-                                        )}
-
-                                        {testQuestions.length === 0 ? <div className="admin-tree-empty">{tx("Savollar topilmadi")}</div> : testQuestions.map((question) => {
-                                          const questionAnswers = answersByQuestion[question.id] || [];
-                                          const questionOpen = isExpanded("questions", question.id);
-
-                                          return (
-                                            <section className="admin-tree-node admin-tree-node-question" key={question.id}>
-                                              <div className="admin-tree-row" role="button" tabIndex={0} onClick={() => toggleNode("questions", question.id)} onKeyDown={(event) => handleTreeKeyDown(event, "questions", question.id)}>
-                                                <span className="admin-tree-toggle">{questionOpen ? "-" : "+"}</span>
-                                                <div className="admin-tree-summary"><strong>{tx("Savol")} #{question.id}</strong><span>{questionAnswers.length} {tx("javob")}</span></div>
-                                                <div className="admin-tree-fields admin-tree-question-fields" onClick={(event) => event.stopPropagation()}>
-                                                  <CustomSelect value={question.test} onChange={(value) => handleQuestionFieldChange(question.id, "test", value)} options={testOptions} placeholder={tx("Test tanlang")} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
-                                                  <input className="admin-input" type="number" value={question.order} onChange={(event) => handleQuestionFieldChange(question.id, "order", event.target.value)} placeholder={tx("Tartib")} />
-                                                  <textarea className="admin-textarea" value={question.text} onChange={(event) => handleQuestionFieldChange(question.id, "text", event.target.value)} />
-                                                  <div className="admin-question-image-cell">
-                                                    {question.image && <img src={question.image} alt={tx("Savol rasmi")} className="admin-question-image-preview" />}
-                                                    <input className="admin-input" type="file" accept="image/*" onChange={(event) => handleQuestionFieldChange(question.id, "imageFile", event.target.files?.[0] || null)} />
-                                                  </div>
-                                                </div>
-                                                <div className="admin-table-actions" onClick={(event) => event.stopPropagation()}>
-                                                  <button type="button" className="admin-primary-btn" onClick={() => { setNodeExpanded("questions", question.id); toggleAddForm("answer", question.id); }}>+ {tx("Javob")}</button>
-                                                  <button type="button" className="admin-primary-btn" disabled={savingId === `question-${question.id}`} onClick={() => handleSaveQuestion(question)}>{savingId === `question-${question.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
-                                                  <button type="button" className="admin-danger-btn" onClick={() => handleDeleteQuestion(question)}>{tx("O'chirish")}</button>
-                                                </div>
-                                              </div>
-
-                                              {questionOpen && (
-                                                <div className="admin-tree-children admin-tree-answer-children">
-                                                  {openAddForm.answer === question.id && (
-                                                    <div className="admin-tree-add-form">
-                                                      <input className="admin-input" value={newAnswer.text} onChange={(event) => setNewAnswer((prev) => ({ ...prev, text: event.target.value }))} placeholder={tx("Javob matni")} />
-                                                      <label className="admin-check-field"><input type="checkbox" checked={newAnswer.is_correct} onChange={(event) => setNewAnswer((prev) => ({ ...prev, is_correct: event.target.checked }))} />{tx("To'g'ri javob")}</label>
-                                                      <button type="button" className="admin-primary-btn" onClick={() => handleCreateAnswer({ question: question.id })}>+ {tx("Javob")}</button>
-                                                    </div>
-                                                  )}
-
-                                                  {questionAnswers.length === 0 ? <div className="admin-tree-empty">{tx("Javoblar topilmadi")}</div> : (
-                                                    <div className="admin-answer-list">
-                                                      {questionAnswers.map((answer, index) => (
-                                                        <div className="admin-answer-row admin-tree-answer-row" key={answer.id}>
-                                                          <span className="admin-answer-index">{index + 1}</span>
-                                                          <input className="admin-input" value={answer.text} onChange={(event) => handleAnswerFieldChange(answer.id, "text", event.target.value)} />
-                                                          <CustomSelect value={answer.question} onChange={(value) => handleAnswerFieldChange(answer.id, "question", value)} options={questionOptions} placeholder={tx("Savol tanlang")} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
-                                                          <label className="admin-check-field"><input type="checkbox" checked={answer.is_correct} onChange={(event) => handleAnswerFieldChange(answer.id, "is_correct", event.target.checked)} />{tx("To'g'ri")}</label>
-                                                          <button type="button" className="admin-primary-btn" disabled={savingId === `answer-${answer.id}`} onClick={() => handleSaveAnswer(answer)}>{savingId === `answer-${answer.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
-                                                          <button type="button" className="admin-danger-btn" onClick={() => handleDeleteAnswer(answer)}>{tx("O'chirish")}</button>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )}
-                                            </section>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </section>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </section>
-                      );
-                    })}
+              return (
+                <article className="admin-drill-row" key={subject.id}>
+                  <div className="admin-drill-row-main">
+                    <div className="admin-drill-row-title">
+                      <strong>{subject.name_uz || subject.name_ru || tx("Fan")}</strong>
+                      <span>{subjectTests.length} {tx("test")}</span>
+                    </div>
+                    <span className={subject.is_active ? "admin-status-pill active" : "admin-status-pill"}>
+                      {subject.is_active ? tx("Faol") : tx("Nofaol")}
+                    </span>
                   </div>
-                )}
-              </section>
-            );
-          })}
+                  <div className="admin-drill-edit-grid admin-drill-edit-grid-4">
+                    <input className="admin-input" value={subject.name_uz} onChange={(event) => handleSubjectFieldChange(subject.id, "name_uz", event.target.value)} placeholder={tx("UZ nomi")} />
+                    <input className="admin-input" value={subject.name_ru} onChange={(event) => handleSubjectFieldChange(subject.id, "name_ru", event.target.value)} placeholder={tx("RU nomi")} />
+                    <CustomSelect value={subject.direction} onChange={(value) => handleSubjectFieldChange(subject.id, "direction", value)} options={directions} placeholder={tx("Yo'nalish tanlang")} getOptionLabel={(item) => item.name_uz || item.name_ru || `#${item.id}`} getOptionValue={(item) => item.id} />
+                    <label className="admin-check-field"><input type="checkbox" checked={subject.is_active} onChange={(event) => handleSubjectFieldChange(subject.id, "is_active", event.target.checked)} />{tx("Faol")}</label>
+                  </div>
+                  <div className="admin-table-actions admin-drill-actions">
+                    <button type="button" className="admin-primary-btn" disabled={savingId === `subject-${subject.id}`} onClick={() => handleSaveSubject(subject)}>{savingId === `subject-${subject.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
+                    <button type="button" className="admin-danger-btn" onClick={() => handleDeleteSubject(subject)}>{tx("O'chirish")}</button>
+                    <button type="button" className="admin-secondary-btn" onClick={() => goToSubject(subject.id)}>{tx("Ochish")} -&gt;</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (selectedSubject && !selectedTest) {
+    return renderDrillShell(
+      <section className="admin-drill-screen">
+        {openAddForm.test === selectedSubject.id && (
+          <div className="admin-drill-add-form admin-drill-add-form-test">
+            <input className="admin-input" value={newTest.title} onChange={(event) => setNewTest((prev) => ({ ...prev, title: event.target.value }))} placeholder={tx("Test nomi")} />
+            <CustomSelect value={newTest.school_class} onChange={(value) => setNewTest((prev) => ({ ...prev, school_class: value }))} options={classOptions} placeholder={classLoading ? tx("Sinflar yuklanmoqda...") : tx("Sinf tanlang")} disabled={classLoading} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
+            <input className="admin-input" type="number" value={newTest.duration_minutes} onChange={(event) => setNewTest((prev) => ({ ...prev, duration_minutes: event.target.value }))} placeholder={tx("Davomiylik")} />
+            <label className="admin-check-field"><input type="checkbox" checked={newTest.is_active} onChange={(event) => setNewTest((prev) => ({ ...prev, is_active: event.target.checked }))} />{tx("Faol")}</label>
+            <button type="button" className="admin-primary-btn" onClick={() => handleCreateTest({ subject: selectedSubject.id })}>+ {tx("Test")}</button>
+          </div>
+        )}
+
+        {currentTests.length === 0 ? (
+          <div className="admin-table-empty">{tx("Testlar topilmadi")}</div>
+        ) : (
+          <div className="admin-drill-list">
+            {currentTests.map((test) => {
+              const testQuestions = questionsByTest[test.id] || [];
+
+              return (
+                <article className="admin-drill-row admin-drill-row-test" key={test.id}>
+                  <div className="admin-drill-row-main">
+                    <div className="admin-drill-row-title">
+                      <strong>{test.title || tx("Test")}</strong>
+                      <span>{getClassLabel(test)}</span>
+                    </div>
+                    <div className="admin-drill-badges">
+                      <span className={test.is_active ? "admin-status-pill active" : "admin-status-pill"}>
+                        {test.is_active ? tx("Faol") : tx("Nofaol")}
+                      </span>
+                      <span>{testQuestions.length} {tx("savol")}</span>
+                    </div>
+                  </div>
+                  <div className="admin-test-assignment-panel">
+                    <div>
+                      <span>{tx("Biriktirilgan sinf")}</span>
+                      <strong>{getClassLabel(test)}</strong>
+                    </div>
+                    <CustomSelect
+                      value={test.school_class || ""}
+                      onChange={(value) => handleTestFieldChange(test.id, "school_class", value)}
+                      options={classOptions}
+                      placeholder={classLoading ? tx("Sinflar yuklanmoqda...") : tx("Sinf tanlang")}
+                      disabled={classLoading}
+                      getOptionLabel={(item) => item.label}
+                      getOptionValue={(item) => item.id}
+                    />
+                  </div>
+                  <div className="admin-table-actions admin-drill-actions">
+                    <button type="button" className="admin-primary-btn" disabled={savingId === `test-${test.id}`} onClick={() => handleSaveTest(test)}>{savingId === `test-${test.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
+                    <button type="button" className="admin-danger-btn" onClick={() => handleDeleteTest(test)}>{tx("O'chirish")}</button>
+                    <button type="button" className="admin-secondary-btn" onClick={() => goToTest(test.id)}>{tx("Ochish")} -&gt;</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (selectedTest && !selectedQuestion) {
+    return renderDrillShell(
+      <section className="admin-drill-screen">
+        <div className="admin-test-focus-panel">
+          <div>
+            <span>{tx("Test")}</span>
+            <strong>{selectedTest.title || tx("Test")}</strong>
+          </div>
+          <div>
+            <span>{tx("Sinf")}</span>
+            <strong>{getClassLabel(selectedTest)}</strong>
+          </div>
+          <div>
+            <span>{tx("Holat")}</span>
+            <strong>{selectedTest.is_active ? tx("Faol") : tx("Nofaol")}</strong>
+          </div>
         </div>
-      )}
-    </div>
+
+        {openAddForm.question === selectedTest.id && (
+          <div className="admin-drill-add-form admin-question-create-form">
+            <input className="admin-input" type="number" value={newQuestion.order} onChange={(event) => setNewQuestion((prev) => ({ ...prev, order: event.target.value }))} placeholder={tx("Tartib")} />
+            <textarea className="admin-textarea" value={newQuestion.text} onChange={(event) => setNewQuestion((prev) => ({ ...prev, text: event.target.value }))} placeholder={tx("Savol matni")} />
+            <input className="admin-input" type="file" accept="image/*" onChange={(event) => setNewQuestion((prev) => ({ ...prev, image: event.target.files?.[0] || null }))} />
+            <button type="button" className="admin-primary-btn" onClick={() => handleCreateQuestion({ test: selectedTest.id })}>+ {tx("Savol")}</button>
+          </div>
+        )}
+
+        {currentQuestions.length === 0 ? (
+          <div className="admin-table-empty">{tx("Savollar topilmadi")}</div>
+        ) : (
+          <div className="admin-question-drill-list">
+            {currentQuestions.map((question) => {
+              const questionAnswers = answersByQuestion[question.id] || [];
+
+              return (
+                <article className="admin-question-drill-row" key={question.id}>
+                  <span className="admin-answer-index">{question.order || question.id}</span>
+                  <div className="admin-question-drill-copy">
+                    <strong>{getQuestionPreview(question)}</strong>
+                    <span>
+                      {question.image ? tx("Rasm mavjud") : tx("Rasm yo'q")} - {questionAnswers.length} {tx("javob")}
+                    </span>
+                  </div>
+                  <div className="admin-table-actions admin-drill-actions">
+                    <button type="button" className="admin-primary-btn" onClick={() => goToQuestion(question.id)}>{tx("Tahrirlash")}</button>
+                    <button type="button" className="admin-danger-btn" onClick={() => handleDeleteQuestion(question)}>{tx("O'chirish")}</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  if (selectedQuestion) {
+    return renderDrillShell(
+      <section className="admin-drill-screen admin-question-editor-screen">
+        <div className="admin-question-editor-panel">
+          <div className="admin-question-editor-grid">
+            <CustomSelect value={selectedQuestion.test} onChange={(value) => handleQuestionFieldChange(selectedQuestion.id, "test", value)} options={testOptions} placeholder={tx("Test tanlang")} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
+            <input className="admin-input" type="number" value={selectedQuestion.order} onChange={(event) => handleQuestionFieldChange(selectedQuestion.id, "order", event.target.value)} placeholder={tx("Tartib")} />
+            <textarea className="admin-textarea admin-question-editor-text" value={selectedQuestion.text} onChange={(event) => handleQuestionFieldChange(selectedQuestion.id, "text", event.target.value)} placeholder={tx("Savol matni")} />
+            <div className="admin-question-image-editor">
+              <span>{tx("Savol rasmi")}</span>
+              {selectedQuestion.image ? (
+                <img src={selectedQuestion.image} alt={tx("Savol rasmi")} className="admin-question-image-preview-large" />
+              ) : (
+                <div className="admin-question-image-placeholder">{tx("Rasm yo'q")}</div>
+              )}
+              <input className="admin-input" type="file" accept="image/*" onChange={(event) => handleQuestionFieldChange(selectedQuestion.id, "imageFile", event.target.files?.[0] || null)} />
+            </div>
+          </div>
+          <div className="admin-table-actions admin-drill-actions">
+            <button type="button" className="admin-primary-btn" disabled={savingId === `question-${selectedQuestion.id}`} onClick={() => handleSaveQuestion(selectedQuestion)}>{savingId === `question-${selectedQuestion.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
+            <button type="button" className="admin-danger-btn" onClick={() => handleDeleteQuestion(selectedQuestion)}>{tx("O'chirish")}</button>
+          </div>
+        </div>
+
+        <div className="admin-answer-editor-panel">
+          <div className="admin-answer-group-title">
+            <h4>{tx("Javoblar")}</h4>
+            <span>{currentAnswers.length} {tx("javob")}</span>
+          </div>
+
+          {openAddForm.answer === selectedQuestion.id && (
+            <div className="admin-drill-add-form admin-answer-create-form">
+              <input className="admin-input" value={newAnswer.text} onChange={(event) => setNewAnswer((prev) => ({ ...prev, text: event.target.value }))} placeholder={tx("Javob matni")} />
+              <label className="admin-check-field"><input type="checkbox" checked={newAnswer.is_correct} onChange={(event) => setNewAnswer((prev) => ({ ...prev, is_correct: event.target.checked }))} />{tx("To'g'ri javob")}</label>
+              <button type="button" className="admin-primary-btn" onClick={() => handleCreateAnswer({ question: selectedQuestion.id })}>+ {tx("Javob")}</button>
+            </div>
+          )}
+
+          {currentAnswers.length === 0 ? (
+            <div className="admin-table-empty">{tx("Javoblar topilmadi")}</div>
+          ) : (
+            <div className="admin-answer-list">
+              {currentAnswers.map((answer, index) => (
+                <div className="admin-answer-row admin-answer-drill-row" key={answer.id}>
+                  <span className="admin-answer-index">{index + 1}</span>
+                  <input className="admin-input" value={answer.text} onChange={(event) => handleAnswerFieldChange(answer.id, "text", event.target.value)} />
+                  <CustomSelect value={answer.question} onChange={(value) => handleAnswerFieldChange(answer.id, "question", value)} options={questionOptions} placeholder={tx("Savol tanlang")} getOptionLabel={(item) => item.label} getOptionValue={(item) => item.id} />
+                  <label className="admin-check-field"><input type="checkbox" checked={answer.is_correct} onChange={(event) => handleAnswerFieldChange(answer.id, "is_correct", event.target.checked)} />{tx("To'g'ri")}</label>
+                  <button type="button" className="admin-primary-btn" disabled={savingId === `answer-${answer.id}`} onClick={() => handleSaveAnswer(answer)}>{savingId === `answer-${answer.id}` ? tx("Saqlanmoqda...") : tx("Saqlash")}</button>
+                  <button type="button" className="admin-danger-btn" onClick={() => handleDeleteAnswer(answer)}>{tx("O'chirish")}</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  return renderDrillShell(
+    <div className="admin-table-empty">{tx("Kontent topilmadi")}</div>
   );
 }
 

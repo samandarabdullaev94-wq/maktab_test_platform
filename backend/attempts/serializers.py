@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 from .models import Certificate, TestSession
-from tests_app.models import Question
+from tests_app.models import Question, Test
 
 
 class StartSessionSerializer(serializers.Serializer):
@@ -101,16 +101,68 @@ class TestSessionDetailSerializer(serializers.ModelSerializer):
 
 class CertificateSerializer(serializers.ModelSerializer):
     issued_at = serializers.DateTimeField(read_only=True)
+    template_snapshot = serializers.JSONField(read_only=True)
+    test_title = serializers.SerializerMethodField()
+    subject_names = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
 
     class Meta:
         model = Certificate
         fields = [
             "code",
             "full_name",
+            "test_title",
+            "subject_names",
             "score",
             "total_questions",
             "percentage",
             "verify_url",
             "qr_code_url",
+            "template_snapshot",
             "issued_at",
+            "date",
         ]
+
+    def get_certificate_tests(self, obj):
+        if obj.session_id and obj.session:
+            selected_test_ids = []
+            for test_id in obj.session.selected_test_ids:
+                try:
+                    selected_test_ids.append(int(test_id))
+                except (TypeError, ValueError):
+                    continue
+
+            return list(
+                Test.objects.filter(id__in=selected_test_ids).select_related("subject")
+            )
+
+        if obj.attempt_id and obj.attempt and obj.attempt.test_id:
+            return [obj.attempt.test]
+
+        return []
+
+    def get_test_title(self, obj):
+        return ", ".join(
+            test.title
+            for test in self.get_certificate_tests(obj)
+            if test.title
+        )
+
+    def get_subject_names(self, obj):
+        names = []
+        for test in self.get_certificate_tests(obj):
+            subject = getattr(test, "subject", None)
+            if not subject:
+                continue
+
+            name = subject.name_uz or subject.name_ru
+            if name and name not in names:
+                names.append(name)
+
+        return ", ".join(names)
+
+    def get_date(self, obj):
+        if not obj.issued_at:
+            return ""
+
+        return timezone.localtime(obj.issued_at).strftime("%d.%m.%Y")
