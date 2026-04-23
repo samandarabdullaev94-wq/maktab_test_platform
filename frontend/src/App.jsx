@@ -1,6 +1,5 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import TestDetail from "./pages/TestDetail";
 import ResultPage from "./pages/ResultPage";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -633,7 +632,6 @@ function App() {
           </>
         }
       />
-      <Route path="/test/:id" element={<TestDetail />} />
       <Route path="/result" element={<ResultPage />} />
       <Route path="/certificate/:code" element={<CertificatePage />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
@@ -654,4 +652,3 @@ function App() {
 }
 
 export default App;
-
